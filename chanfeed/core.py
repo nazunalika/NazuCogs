@@ -42,10 +42,12 @@ class ChanFeed(commands.Cog):
     __author__ = "nazunalika (Sokel)"
     __version__ = "330.0.1"
 
+    # help formatter
     def format_help_for_context(self, ctx):
-        pre_processed = super().format_help_for_context(ctx)
-        return f"{pre_processed}\nCog Version: {self.__version__}"
+        pre_process = super().format_help_for_context(ctx)
+        return f"{pre_process}\nVersion: {self.__version__}"
 
+    # initial bootstrap
     def __init__(self, bot, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.bot = bot
@@ -56,9 +58,9 @@ class ChanFeed(commands.Cog):
         self.session = aiohttp.ClientSession()
         self.bg_loop_task: Optional[asyncio.Task] = None
 
+    # background sync
     def init(self):
         self.bg_loop_task = asyncio.create_task(self.bg_loop())
-
         def done_callback(fut: asyncio.Future):
             try:
                 fut.exception()
@@ -72,3 +74,10 @@ class ChanFeed(commands.Cog):
                 log.exception("Unexpected exception in chanfeed: ", exc_info=exc)
 
         self.bg_loop_task.add_done_callback(done_callback)
+
+    # unload
+    def cog_unload(self):
+        if self.bg_loop_task:
+            self.bg_loop_task.cancel()
+        asyncio.create_task(self.session.close())
+
