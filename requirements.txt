@@ -1,0 +1,8 @@
+attrs
+pytz
+python-dateutil
+red-discordbot
+dice
+feedparser
+discord-text-sanitizer
+basc_py4chan

@@ -1,0 +1,20 @@
+{
+    "author": [
+        "nazunalika (Sokel)"
+    ],
+    "install_msg": "This cog is provided as is. It may work, it may not work. In the event that it doesn't, please let me know in a github issue and I will see what I can do.",
+    "name": "ChanFeed",
+    "disabled": false,
+    "short": "4chan thread feed cog",
+    "description": "A 4chan thread feed cog that mirrors any thread on any board on 4chan (with a delay)",
+    "tags": [
+        "4chan"
+    ],
+    "hidden": false,
+    "requirements": [
+        "feedparser>=6.0.0b1",
+        "discord-text-sanitizer",
+        "basc_py4chan"
+    ],
+    "min_bot_version": "3.3.0"
+}

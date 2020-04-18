@@ -1,0 +1,12 @@
+{
+    "author": [
+        "nazunalika (Sokel)"
+    ],
+    "install_msg": "Thank you for installing my cogs! Please note that these cogs are as is and may have issues. Please ensure that the cogs are up to date if you have issues. If an update does not resolve the issue, please report it to our github repo.",
+    "name": "Sokel's Cogs",
+    "short": "Some simple tools that I wanted.",
+    "description": "Some tools that I wanted that was not provided by other available cogs.",
+    "tags": [
+        "Utility"
+    ]
+}
