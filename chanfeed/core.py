@@ -35,7 +35,7 @@ class ChanFeed(commands.Cog):
     """
     This is a 4chan feed cog
 
-    This cog has limited support but I will try my best to assist users in this
+    This cog has limited support but I will try my best to assist users in
     fixing any issues that may occur.
     """
 
@@ -86,10 +86,12 @@ class ChanFeed(commands.Cog):
     async def fetch_feed(self, url: str)
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
-        # - - -
+        urlSplit = url.rsplit('/', 3)
+        board = urlSplit[1]
+        thread = urlSplit[3]
         # We don't really need this right now unless I decide to do a full
         # "built-in" of the py4chan plugin. But it's good to know if we can
-        # connect or not.
+        # connect or not and bomb out when we can't.
         urlGeneration = 'https://a.4cdn.org/' + board + '/thread/' + thread + '.json'
         try:
             async with self.session.get(urlGeneration, timeout=timeout) as response:
@@ -112,10 +114,13 @@ class ChanFeed(commands.Cog):
             debug_exc_log(
                     log,
                     exc,
-                    f"Unexpected exception type {type(exc)} encountered for thread {board}:{thread}",
+                    f"Unexpected exception type {type(exc)} encountered for thread {board} -> {thread}",
             )
             return None
 
+        if chanthread.archived:
+            log.debug(f"{board} -> {thread} is archived and is not considered valid.")
+            return None
         return chanthread
 
     #@staticmethod
@@ -143,7 +148,9 @@ class ChanFeed(commands.Cog):
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
-            # Start the embed here
+            # . . .
+            # Start the embed here ...
+            # . . .
             return {"content": None, "embed": embed_data}
         else:
             if len(content) > 2000:
