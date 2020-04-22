@@ -119,6 +119,7 @@ class ChanFeed(commands.Cog):
             return None
 
         if chanthread.archived:
+            # The thread is archived
             log.debug(f"{board} -> {thread} is archived and is not considered valid.")
             return None
         return chanthread
@@ -137,13 +138,14 @@ class ChanFeed(commands.Cog):
             self,
             entry,
             embed: bool,
+            color,
         ) -> dict:
 
-        board = basc_py4chan.Board(entry.board)
-        thread = board.get_thread(entry.thread)
+        #board = basc_py4chan.Board(entry.board)
+        #thread = board.get_thread(entry.thread)
         # create vars for all relevant pieces of the embed
-        postID  = reply.id
-        content = reply.text_comment
+        #postID  = reply.id
+        #content = reply.text_comment
 
         if embed:
             if len(content) > 2000:
@@ -168,11 +170,135 @@ class ChanFeed(commands.Cog):
         pass
 
     @commands.cooldown(3, 60, type=commands.BucketType.user)
-    @chanfeed.command()
-    async def addfeed(
+    @chanfeed.command(command="add")
+    async def add_feed(
             self,
             ctx: commands.GuildContext,
             name: str,
             url: str,
             channel: Optional[discord.TextChannel] = None,
     ):
+
+        """
+        Adds a 4chan thread feed to the current or provided channel
+        """
+
+        channel = channel or ctx.channel
+
+        async with self.config.channel(channel).feeds() as feeds:
+            if name in feeds:
+                return await ctx.send(f"{name}: That name is already in use, please choose another")
+
+            response = await self.fetch_feed(url)
+
+            if response is None:
+                return await ctx.send(
+                    f"That doesn't appear to be a valid thread. "
+                    f"(Syntax: {ctx.prefix}{ctx.command.signature})"
+                )
+
+            else:
+                lastCurrentPost = response.last_reply_id
+                feeds.update(
+                    {
+                        name: {
+                            "url": url,
+                            "embed_override": None,
+                            "lastPostID": lastCurrentPost,
+                        }
+                    }
+                )
+
+        await ctx.tick()
+
+    @chanfeed.command(name="remove")
+    async def remove_feed(
+            self,
+            ctx,
+            name: str,
+            channel: Optional[discord.TextChannel] = None,
+    ):
+        """
+        Removes a thread feed from the current channel or from a provided channel.
+
+        If the feed is in the process of being fetched, there could be one final
+        update that appears, unless the thread is in an archived state or 404.
+        """
+
+        channel = channel or ctx.channel
+        async with self.config.channel(channel).feeds() as feeds:
+            if name not in feeds:
+                await ctx.send(f"{name}: There is no feed with that name in {channel.mention}.")
+                return
+
+            del feeds[name]
+
+        await ctx.tick()
+
+    @chanfeed.command(name="embed")
+    async def set_embed(
+        self,
+        ctx,
+        name: str,
+        setting: TriState,
+        channel: Optional[discord.TextChannel] = None,
+    ):
+        """
+        Sets if a feed should use or not use an embed. This uses the default bot
+        setting if not set.
+
+        Only accepts: True, False, Default
+        """
+
+        channel = channel or ctx.channel
+
+        async with self.config.channel(channel).feeds() as feeds:
+            if name not in feeds:
+                await ctx.send(f"{name}: No feed with that name in {channel.mention}.")
+                return
+
+            feeds[name]["embed_override"] = setting.state
+
+        await ctx.tick()
+
+    @chanfeed.command(name="force")
+    async def force_feed(
+            self,
+            ctx,
+            feed,
+            channel: Optional[discord.TextChannel] = None
+    ):
+        """
+        Forces the latest post for a thread
+        """
+
+        channel = channel or ctx.channel
+        feeds = await self.config.channel(channel).feeds()
+        url = None
+
+        if feed in feeds:
+            url = feeds[feed].get("url", None)
+
+        if url is None:
+            return await ctx.send("There is no such feed available. Try your call again later.")
+
+        response = await self.fetch_feed(url)
+
+        # Like another section, if we get "None" then we're not valid
+        # That's just how it has to be
+        if response:
+            should_embed = await self.should_embed(ctx.channel)
+
+            try:
+                await self.format_and_send(
+                        destination=channel,
+                        response=response,
+                        embed_default=should_embed,
+                        force=True,
+                )
+            except Exception:
+                await ctx.send("We caught an error with your request. Try your call again later.")
+            else:
+                await ctx.tick()
+        else:
+            await ctx.send("That doesn't appear to be a valid thread.")
