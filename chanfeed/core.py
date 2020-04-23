@@ -149,15 +149,6 @@ class ChanFeed(commands.Cog):
 
         assert isinstance(response.entries, list), "mypy"
 
-        #if force:
-        #    try:
-        #        #to_send = [response.entries[0]]
-        #        replies = len(response.replies)
-        #    except
-                #lastCurrentPost = response.last_reply_id
-                #threadReplyNumber = response.replies - 1
-                            #"lastPostID": lastCurrentPost,
-                            #"numberOfPosts": threadReplyNumber,
         lastCurrentPost = feed_settings.get("lastPostID", None)
         threadReplyNumber = feed_settings.get("numberOfPosts", None)
 
@@ -263,7 +254,7 @@ class ChanFeed(commands.Cog):
         else:
             if last:
                 lastCurrentPost = response.last_reply_id
-                threadReplyNumber = response.replies - 1
+                threadReplyNumber = len(response.replies) - 1
                 await self.config.channel(channel).feeds.set_raw(
                         feed_name, "lastPostID", value=lastCurrentPost
                 )
@@ -350,7 +341,7 @@ class ChanFeed(commands.Cog):
 
             else:
                 lastCurrentPost = response.last_reply_id
-                threadReplyNumber = response.replies - 1
+                threadReplyNumber = len(response.replies) - 1
                 feeds.update(
                     {
                         name: {
