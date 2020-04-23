@@ -314,8 +314,7 @@ class ChanFeed(commands.Cog):
 
             if response is None:
                 return await ctx.send(
-                    f"That doesn't appear to be a valid thread. "
-                    f"(Syntax: {ctx.prefix}{ctx.command.signature})"
+                        f"{name}: That doesn't appear to be a valid thread."
                 )
 
             else:
@@ -383,6 +382,43 @@ class ChanFeed(commands.Cog):
             feeds[name]["embed_override"] = setting.state
 
         await ctx.tick()
+
+    @chanfeed.command(name="list")
+    async def list_feeds(
+            self, ctx: commands.GuildContext, channel: Optional[discord.TextChannel] = None
+    ):
+        """
+        Lists the current feeds for the current channel or the one provided.
+        """
+
+        channel = channel or ctx.channel
+        data = await self.config.channel(channel).feeds()
+
+        if not data:
+            return await ctx.send(f"{channel}: No feeds.")
+
+        if await ctx.embed_requested():
+            output = "\n".join(
+                (
+                    "{name}: {url}".format(name=k, url=v.get("url", "broken feed..."))
+                    for k, v in data.items()
+                )
+            )
+            for page in pagify(output):
+                await ctx.send(
+                    embed=discord.Embed(
+                        description=page, color=(await ctx.embed_color())
+                    )
+                )
+        else:
+            output = "\n".join(
+                (
+                    "{name}: <{url}>".format(name=k, url=v.get("url", "broken feed..."))
+                    for k, v in data.items()
+                )
+            )
+            for page in pagify(output):
+                await ctx.send(page)
 
     @chanfeed.command(name="force")
     async def force_feed(
