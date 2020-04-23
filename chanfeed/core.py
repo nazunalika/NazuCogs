@@ -291,8 +291,8 @@ class ChanFeed(commands.Cog):
         pass
 
     @commands.cooldown(3, 60, type=commands.BucketType.user)
-    @chanfeed.command(command="add")
-    async def add_feed(
+    @chanfeed.command()
+    async def addfeed(
             self,
             ctx: commands.GuildContext,
             name: str,
