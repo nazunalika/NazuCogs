@@ -83,7 +83,7 @@ class ChanFeed(commands.Cog):
 
     # fetch the feed here
     # Check that the board exists and then check the thread exists
-    async def fetch_feed(self, url: str)
+    async def fetch_feed(self, url: str):
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
         urlSplit = url.rsplit('/', 3)
