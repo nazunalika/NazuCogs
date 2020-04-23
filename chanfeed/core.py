@@ -20,9 +20,7 @@ from .converters import TriState
 # We need this to interact with 4chan's API
 import basc_py4chan
 import re
-
-# These imports may not be needed
-import feedparser
+import time
 
 log = logging.getLogger("red.nazucogs.chanfeed")
 DONT_HTML_SCRUB = ["link", "source", "updated", "updated_parsed"]
@@ -122,6 +120,7 @@ class ChanFeed(commands.Cog):
             # The thread is archived
             log.debug(f"{board} -> {thread} is archived and is not considered valid.")
             return None
+
         return chanthread
 
     @staticmethod
@@ -191,11 +190,35 @@ class ChanFeed(commands.Cog):
             color,
     ) -> dict:
 
-        #board = basc_py4chan.Board(entry.board)
-        #thread = board.get_thread(entry.thread)
+        # Eventually I want to get this to loop correctly, probably somewhere
+        # else
+        board = basc_py4chan.Board(entry.board)
+        thread = board.get_thread(entry.thread)
+        replyNumber = len(thread.replies) - 1
+        reply = thread.replies[replyNumber]
         # create vars for all relevant pieces of the embed
-        #postID  = reply.id
-        #content = reply.text_comment
+        chanLogoImg    = "<img src='https://i.imgur.com/xKI9j3H.png' style='width:20px;height:20px;'/>"
+        postTimestamp  = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
+        postURL        = reply.url
+        posterID       = reply.number
+        posterName     = reply.name
+        poster         = reply.poster_id or ""
+        posterTrip     = reply.tripcode or ""
+        postComment    = reply.comment
+        clearComment   = reply.text_comment
+        # Replace post references with full links to the post
+        content        = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' +
+        board.name + '/thread/' + str(thread.num) + r'\1', content)
+
+        # Conditionals
+        if reply.thumbnail_url:
+            fieldNameOne = "<img src='" + reply.thumbnail_url + "'/>"
+        else:
+            fieldNameOne = ""
+
+        embedTitle  = chanLogoImg + " " + posterName + " " + poster + " " + posterTrip
+        embedDesc   = "<a href='" + postURL + "'>No. " + str(reply.number) + "</a>"
+        embedFooter = postTimeStamp
 
         if embed:
             if len(content) > 2000:
@@ -203,10 +226,18 @@ class ChanFeed(commands.Cog):
             # . . .
             # Start the embed here ...
             # . . .
-            return {"content": None, "embed": embed_data}
+            #embed_data = discord.Embed(
+            #        . . .
+            #)
+            embedData = discord.Embed(
+                    title=embedTitle, description=embedDesc, color=color
+            )
+            embedData.add_field(name=fieldNameOne, value=content, inline=false)
+            embedData.set_footer(text=embedFooter)
+            return {"content": None, "embed": embedData}
         else:
             if len(content) > 2000:
-                content = content[:1900] + "... (post is too long)"
+                clearTextConent = clearComment[:1900] + "... (post is too long)"
             return {"content": content, "embed": None}
 
     async def handle_response_from_loop(
