@@ -124,22 +124,72 @@ class ChanFeed(commands.Cog):
             return None
         return chanthread
 
-    #@staticmethod
-    #def process_post_number_and_id(x):
+    @staticmethod
+    def process_post_number(r):
+        if "lastPostID" in r:
+            return r.get("lastPostID")
+        return (0,)
 
-    #async def format_and_send(
-    #        self,
-    #        *,
-    #        destination: discord.TextChannel,
-    #        #response: chanthread,
-    #        embed_default: bool,
+    async def format_and_send(
+            self,
+            *,
+            destination: discord.TextChannel,
+            response,
+            feed_settings: dict,
+            embed_default: bool,
+            force: bool = False,
+    ) -> Optional[List[int]]:
+        """
+        Formats and sends and it will update the config of the current number
+        of replies, including the latest post ID
+        """
+
+        use_embed = feed_settings.get("embed_override", None)
+        if use_embed is None:
+            use_embed = embed_default
+
+        assert isinstance(response.entries, list), "mypy"
+
+        #if force:
+        #    try:
+        #        #to_send = [response.entries[0]]
+        #        replies = len(response.replies)
+        #    except
+                #lastCurrentPost = response.last_reply_id
+                #threadReplyNumber = response.replies - 1
+                            #"lastPostID": lastCurrentPost,
+                            #"numberOfPosts": threadReplyNumber,
+        lastCurrentPost = feed_settings.get("lastPostID", None)
+        threadReplyNumber = feed_settings.get("numberOfPosts", None)
+
+        # Eventually I want to do some sorting in a much better way
+        to_send = sorted(
+                [r for r in response.entries if self.process_post_number(r) > last],
+                key=self.process_post_number,
+        )
+
+        last_sent = None
+        for entry in to_send:
+            color = destination.guild.me.color
+            kwargs = self.format_post(
+                    entry,
+                    use_embed,
+                    color,
+            )
+            try:
+                await self.bot.send_filtered(destination, **kwargs)
+            except discord.HTTPException as exc:
+                debug_exc_log(log, exc, "Caught exception while sending the feed.")
+            last_sent = list(self.process_entry_time(entry))
+
+        return last_sent
 
     def format_post(
             self,
             entry,
             embed: bool,
             color,
-        ) -> dict:
+    ) -> dict:
 
         #board = basc_py4chan.Board(entry.board)
         #thread = board.get_thread(entry.thread)
@@ -158,6 +208,77 @@ class ChanFeed(commands.Cog):
             if len(content) > 2000:
                 content = content[:1900] + "... (post is too long)"
             return {"content": content, "embed": None}
+
+    async def handle_response_from_loop(
+            self,
+            *,
+            response,
+            channel: discord.TextChannel,
+            feed: dict,
+            feed_name: str,
+            should_embed: bool,
+    ):
+        if not response:
+            return
+        try:
+            last = await self.format_and_send(
+                    destination=channel,
+                    response=response,
+                    feed_settings=feed,
+                    embed_default=should_embed,
+            )
+        except Exception as exc:
+            debug_exc_log(log, exc)
+        else:
+            if last:
+                lastCurrentPost = response.last_reply_id
+                threadReplyNumber = response.replies - 1
+                await self.config.channel(channel).feeds.set_raw(
+                        feed_name, "lastPostID", value=lastCurrentPost
+                )
+
+                await self.config.channel(channel).feeds.set_raw(
+                        feed_name, "numberOfPosts", value=threadReplyNumber
+                )
+
+
+    async def do_feeds(self):
+        feeds_fetched: Dict[str, Any] = {}
+        default_embed_settings: Dict[discord.Guild, bool] = {}
+        channel_data = await self.config.all_channels()
+
+        for channel_id, data in channel_data.items():
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                continue
+            if channel.guild not in default_embed_settings:
+                should_embed = await self.should_embed(channel)
+                default_embed_settings[channel.guild] = should_embed
+            else:
+                should_embed = default_embed_settings[channel.guild]
+
+            for feed_name, feed in data["feeds"].items():
+                url = feed.get("url", None)
+                if not url:
+                    continue
+                if url in feeds_fetched:
+                    response = feeds_fetched[url]
+                else:
+                    response = await self.fetch_feed(url)
+                    feeds_fetched[url] = response
+
+                await self.handle_response_from_loop(
+                        response=response,
+                        channel=channel,
+                        feed=feed,
+                        feed_name=feed_name,
+                        should_embed=should_embed,
+                )
+
+    async def bg_loop(self):
+        await self.bot.wait_until_ready()
+        while await asyncio.sleep(15, True):
+            await self.do_feeds()
 
     # Commands
     @checks.mod_or_permissions(manage_channels=True)
@@ -199,12 +320,14 @@ class ChanFeed(commands.Cog):
 
             else:
                 lastCurrentPost = response.last_reply_id
+                threadReplyNumber = response.replies - 1
                 feeds.update(
                     {
                         name: {
                             "url": url,
                             "embed_override": None,
                             "lastPostID": lastCurrentPost,
+                            "numberOfPosts": threadReplyNumber,
                         }
                     }
                 )
@@ -271,34 +394,34 @@ class ChanFeed(commands.Cog):
         """
         Forces the latest post for a thread
         """
-
-        channel = channel or ctx.channel
-        feeds = await self.config.channel(channel).feeds()
-        url = None
-
-        if feed in feeds:
-            url = feeds[feed].get("url", None)
-
-        if url is None:
-            return await ctx.send("There is no such feed available. Try your call again later.")
-
-        response = await self.fetch_feed(url)
-
-        # Like another section, if we get "None" then we're not valid
-        # That's just how it has to be
-        if response:
-            should_embed = await self.should_embed(ctx.channel)
-
-            try:
-                await self.format_and_send(
-                        destination=channel,
-                        response=response,
-                        embed_default=should_embed,
-                        force=True,
-                )
-            except Exception:
-                await ctx.send("We caught an error with your request. Try your call again later.")
-            else:
-                await ctx.tick()
-        else:
-            await ctx.send("That doesn't appear to be a valid thread.")
+        await ctx.send("This function is not available yet.")
+#        channel = channel or ctx.channel
+#        feeds = await self.config.channel(channel).feeds()
+#        url = None
+#
+#        if feed in feeds:
+#            url = feeds[feed].get("url", None)
+#
+#        if url is None:
+#            return await ctx.send("There is no such feed available. Try your call again later.")
+#
+#        response = await self.fetch_feed(url)
+#
+#        # Like another section, if we get "None" then we're not valid
+#        # That's just how it has to be
+#        if response:
+#            should_embed = await self.should_embed(ctx.channel)
+#            try:
+#                await self.format_and_send(
+#                        destination=channel,
+#                        response=response,
+#                        feed_settings=feeds[feed],
+#                        embed_default=should_embed,
+#                        force=True,
+#                )
+#            except Exception:
+#                await ctx.send("We caught an error with your request. Try your call again later.")
+#            else:
+#                await ctx.tick()
+#        else:
+#            await ctx.send("That doesn't appear to be a valid thread.")
