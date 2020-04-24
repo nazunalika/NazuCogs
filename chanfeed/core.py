@@ -167,9 +167,14 @@ class ChanFeed(commands.Cog):
                     color,
             )
             try:
+                #await self.bot.send_filtered(destination, **kwargs)
                 await self.bot.send_filtered(destination, **kwargs)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
+            except discord.Forbidden as exc:
+                debug_exc_log(log, exc, "Caught forbidden exception while sending the feed.")
+            except discord.InvalidArgument as exc:
+                debug_exc_log(log, exc, "Invalid argument was caught.")
             last_sent = list(self.process_entry_time(entry))
 
         return last_sent
@@ -435,7 +440,7 @@ class ChanFeed(commands.Cog):
         else:
             output = "\n".join(
                 (
-                    "{name}: <{url}>".format(name=k, url=v.get("url", "broken feed..."))
+                    "{name}: {url}".format(name=k, url=v.get("url", "broken feed..."))
                     for k, v in data.items()
                 )
             )
