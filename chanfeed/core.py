@@ -123,8 +123,8 @@ class ChanFeed(commands.Cog):
         try:
             async with self.session.get(urlGeneration, timeout=timeout) as response:
                 data = await response.read()
-            chanboard = basc_py4chan.Board(board)
-            chanthread = chanboard.get_thread(thread)
+            chanboard = basc_py4chan.Board(split['board'])
+            chanthread = chanboard.get_thread(split['thread'])
             if chanboard.title is not None:
                 if chanthread.id is not None:
                     pass
