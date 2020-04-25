@@ -73,6 +73,14 @@ class ChanFeed(commands.Cog):
 
         self.bg_loop_task.add_done_callback(done_callback)
 
+    # Check if we should embed
+    async def should_embed(
+            self,
+            channel: discord.TextChannel,
+    ) -> bool:
+        ret: bool = await self.bot.embed_requested(channel, channel.guild.me)
+        return ret
+
     # unload
     def cog_unload(self):
         if self.bg_loop_task:
