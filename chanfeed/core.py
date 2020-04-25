@@ -185,7 +185,7 @@ class ChanFeed(commands.Cog):
                 debug_exc_log(log, exc, "Caught forbidden exception while sending the feed.")
             except discord.InvalidArgument as exc:
                 debug_exc_log(log, exc, "Invalid argument was caught.")
-            last_sent = list(self.process_post_number(entry))
+            last_sent = list(self.process_entry_timestamp(entry))
 
         return last_sent
 
@@ -270,12 +270,18 @@ class ChanFeed(commands.Cog):
             if last:
                 lastCurrentPost = response.last_reply_id
                 threadReplyNumber = len(response.replies) - 1
+                lastReply = response.replies[threadReplyNumber]
+                lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
                 await self.config.channel(channel).feeds.set_raw(
                         feed_name, "lastPostID", value=lastCurrentPost
                 )
 
                 await self.config.channel(channel).feeds.set_raw(
                         feed_name, "numberOfPosts", value=threadReplyNumber
+                )
+
+                await self.config.channel(channel).feeds.set_raw(
+                        feed_name, "lastPostTimestamp", value=lastTimestamp
                 )
 
 
@@ -358,7 +364,7 @@ class ChanFeed(commands.Cog):
                 lastCurrentPost = response.last_reply_id
                 threadReplyNumber = len(response.replies) - 1
                 lastReply = response.replies[threadReplyNumber]
-                lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:6])
+                lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
 
                 feeds.update(
                     {
