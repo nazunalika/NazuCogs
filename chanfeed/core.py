@@ -90,18 +90,36 @@ class ChanFeed(commands.Cog):
             self.bg_loop_task.cancel()
         asyncio.create_task(self.session.close())
 
+    @staticmethod
+    def process_entry_timestamp(r):
+        if r.timestamp:
+            return tuple((time.gmtime(r.timestamp)))[:6]
+        return (0,)
+
+    @staticmethod
+    def process_post_number(r):
+        if r.number:
+            return r.number
+        return 0
+
+    @staticmethod
+    def url_splitter(data):
+        urlSplit = data.rsplit('/', 3)
+        output = {}
+        output['board'] = urlSplit[1]
+        output['thread'] = urlSplit[3]
+        return output
+
     # fetch the feed here
     # Check that the board exists and then check the thread exists
     async def fetch_feed(self, url: str):
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
-        urlSplit = url.rsplit('/', 3)
-        board = urlSplit[1]
-        thread = urlSplit[3]
+        split = self.url_splitter(url)
         # We don't really need this right now unless I decide to do a full
         # "built-in" of the py4chan plugin. But it's good to know if we can
         # connect or not and bomb out when we can't.
-        urlGeneration = 'https://a.4cdn.org/' + board + '/thread/' + thread + '.json'
+        urlGeneration = 'https://a.4cdn.org/' + split['board'] + '/thread/' + split['thread'] + '.json'
         try:
             async with self.session.get(urlGeneration, timeout=timeout) as response:
                 data = await response.read()
@@ -134,18 +152,6 @@ class ChanFeed(commands.Cog):
 
         return chanthread
 
-    @staticmethod
-    def process_entry_timestamp(r):
-        if r.timestamp:
-            return tuple((time.gmtime(r.timestamp)))[:6]
-        return (0,)
-
-    @staticmethod
-    def process_post_number(r):
-        if r.number:
-            return r.number
-        return 0
-
     async def format_and_send(
             self,
             *,
@@ -166,6 +172,7 @@ class ChanFeed(commands.Cog):
         if use_embed is None:
             use_embed = embed_default
 
+        # ERROR HANDLING PLEASE
         loopydata = {}
         lastCurrentPost = feed_settings.get("lastPostID", None)
         threadReplyNumber = feed_settings.get("numberOfPosts", None)
@@ -178,6 +185,9 @@ class ChanFeed(commands.Cog):
                     loopydata['entries'].append(response.replies[k])
             elif newReplies == threadReplyNumber:
                 loopydata['entries'].append(response.replies[-1])
+        elif force:
+            loopydata['entries'] = []
+            loopydata['entries'].append(response.replies[-1])
         else:
             return None
 
@@ -222,10 +232,11 @@ class ChanFeed(commands.Cog):
 
         # Eventually I want to get this to loop correctly, probably somewhere
         # else
-        board = basc_py4chan.Board(entry.board)
-        thread = board.get_thread(entry.thread)
-        replyNumber = len(thread.replies) - 1
-        reply = thread.replies[replyNumber]
+
+        # ERROR HANDLING PLEASE
+        # CHOOSE A BETTER NAME MAYBE
+        reply = entry
+        board = self.url_splitter(reply.url)['board']
         # create vars for all relevant pieces of the embed
         chanLogoImg = "<img src='https://i.imgur.com/xKI9j3H.png' style='width:20px;height:20px;'/>"
         postTimestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
@@ -237,8 +248,8 @@ class ChanFeed(commands.Cog):
         postComment = reply.comment
         clearComment = reply.text_comment
         # Replace post references with full links to the post
-        content = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' + board.name +
-                         '/thread/' + str(thread.num) + r'\1', postComment)
+        content = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' + board +
+                         '/thread/' + str(posterID) + r'\1', postComment)
 
         # Conditionals
         if reply.thumbnail_url:
