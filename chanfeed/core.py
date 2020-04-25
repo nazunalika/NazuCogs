@@ -21,7 +21,7 @@ from redbot.core.utils.chat_formatting import pagify
 import basc_py4chan
 
 # cleanup stuff if we need it
-from .cleanup import html_to_text
+#from .cleanup import html_to_text
 from .converters import TriState
 
 log = logging.getLogger("red.nazucogs.chanfeed")
@@ -139,6 +139,7 @@ class ChanFeed(commands.Cog):
             return tuple(r.get("lastPostTimestamp"))[:6]
         return (0,)
 
+    @staticmethod
     def process_post_number(r):
         if "lastPostID" in r:
             return r.get("lastPostID")
@@ -166,17 +167,23 @@ class ChanFeed(commands.Cog):
 
         assert isinstance(response.entries, list), "mypy"
 
-        lastPostTimestamp = feed_settings.get("lastPostTimestamp", None)
-        lastPostTimestamp = tuple((lastPostTimestamp or (0,))[:6])
+        if force:
+            try:
+                to_send = [response.entries[0]]
+            except IndexError:
+                return None
+        else:
+            lastPostTimestamp = feed_settings.get("lastPostTimestamp", None)
+            lastPostTimestamp = tuple((lastPostTimestamp or (0,))[:6])
 
-        #lastCurrentPost = feed_settings.get("lastPostID", None)
-        #threadReplyNumber = feed_settings.get("numberOfPosts", None)
+            #lastCurrentPost = feed_settings.get("lastPostID", None)
+            #threadReplyNumber = feed_settings.get("numberOfPosts", None)
 
-        # Eventually I want to do some sorting in a much better way
-        to_send = sorted(
-            [r for r in response.entries if self.process_entry_timestamp(r) > lastPostTimestamp],
-            key=self.process_entry_timestamp,
-        )
+            # Eventually I want to do some sorting in a much better way
+            to_send = sorted(
+                [r for r in response.entries if self.process_entry_timestamp(r) > lastPostTimestamp],
+                key=self.process_entry_timestamp,
+            )
 
         last_sent = None
         for entry in to_send:
@@ -438,9 +445,9 @@ class ChanFeed(commands.Cog):
 
     @chanfeed.command(name="list")
     async def list_feeds(
-        self,
-        ctx: commands.GuildContext,
-        channel: Optional[discord.TextChannel] = None
+            self,
+            ctx: commands.GuildContext,
+            channel: Optional[discord.TextChannel] = None
     ):
         """
         Lists the current feeds for the current channel or the one provided.
@@ -493,34 +500,34 @@ class ChanFeed(commands.Cog):
         """
         Forces the latest post for a thread
         """
-        await ctx.send("This function is not available yet.")
-#        channel = channel or ctx.channel
-#        feeds = await self.config.channel(channel).feeds()
-#        url = None
-#
-#        if feed in feeds:
-#            url = feeds[feed].get("url", None)
-#
-#        if url is None:
-#            return await ctx.send("There is no such feed available. Try your call again later.")
-#
-#        response = await self.fetch_feed(url)
-#
-#        # Like another section, if we get "None" then we're not valid
-#        # That's just how it has to be
-#        if response:
-#            should_embed = await self.should_embed(ctx.channel)
-#            try:
-#                await self.format_and_send(
-#                        destination=channel,
-#                        response=response,
-#                        feed_settings=feeds[feed],
-#                        embed_default=should_embed,
-#                        force=True,
-#                )
-#            except Exception:
-#                await ctx.send("We caught an error with your request. Try your call again later.")
-#            else:
-#                await ctx.tick()
-#        else:
-#            await ctx.send("That doesn't appear to be a valid thread.")
+#        await ctx.send("This function is not available yet.")
+        channel = channel or ctx.channel
+        feeds = await self.config.channel(channel).feeds()
+        url = None
+
+        if feed in feeds:
+            url = feeds[feed].get("url", None)
+
+        if url is None:
+            return await ctx.send("There is no such feed available. Try your call again later.")
+
+        response = await self.fetch_feed(url)
+
+        # Like another section, if we get "None" then we're not valid
+        # That's just how it has to be
+        if response:
+            should_embed = await self.should_embed(ctx.channel)
+            try:
+                await self.format_and_send(
+                        destination=channel,
+                        response=response,
+                        feed_settings=feeds[feed],
+                        embed_default=should_embed,
+                        force=True,
+                )
+            except Exception:
+                await ctx.send("We caught an error with your request. Try your call again later.")
+            else:
+                await ctx.tick()
+        else:
+            await ctx.send("That doesn't appear to be a valid thread.")
