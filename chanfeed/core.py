@@ -357,7 +357,7 @@ class ChanFeed(commands.Cog):
             else:
                 lastCurrentPost = response.last_reply_id
                 threadReplyNumber = len(response.replies) - 1
-                lastReply = thread.replies[threadReplyNumber]
+                lastReply = response.replies[threadReplyNumber]
                 lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:6])
 
                 feeds.update(
