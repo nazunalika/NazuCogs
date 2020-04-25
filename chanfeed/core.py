@@ -112,7 +112,7 @@ class ChanFeed(commands.Cog):
             debug_exc_log(
                     log,
                     exc,
-                    f"Unexpected exception type {type(exc)} encountered for thread {board} -> {thread}",
+                    f"Unexpected exception type {type(exc)} encountered for {board} -> {thread}",
             )
             return None
 
@@ -124,10 +124,15 @@ class ChanFeed(commands.Cog):
         return chanthread
 
     @staticmethod
+    def process_entry_timestamp(r):
+        if lastPostTimestamp in x:
+            return r.get("lastPostTimestamp")
+        return (0,)
+
     def process_post_number(r):
         if "lastPostID" in r:
             return r.get("lastPostID")
-        return (0,)
+        return 0
 
     async def format_and_send(
             self,
@@ -140,7 +145,9 @@ class ChanFeed(commands.Cog):
     ) -> Optional[List[int]]:
         """
         Formats and sends and it will update the config of the current number
-        of replies, including the latest post ID
+        of replies, including the latest post ID. Those things will be used to
+        determine if the thread has updated and to push the update to the
+        channel later.
         """
 
         use_embed = feed_settings.get("embed_override", None)
@@ -175,7 +182,7 @@ class ChanFeed(commands.Cog):
                 debug_exc_log(log, exc, "Caught forbidden exception while sending the feed.")
             except discord.InvalidArgument as exc:
                 debug_exc_log(log, exc, "Invalid argument was caught.")
-            last_sent = list(self.process_entry_time(entry))
+            last_sent = list(self.process_post_number(entry))
 
         return last_sent
 
