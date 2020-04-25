@@ -6,6 +6,9 @@ import string
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
+# Fixing import order
+import re
+import time
 import aiohttp
 import discord
 
@@ -14,13 +17,12 @@ from redbot.core import commands, checks
 from redbot.core.config import Config
 from redbot.core.utils.chat_formatting import pagify
 
-from .cleanup import html_to_text
-from .converters import TriState
-
 # We need this to interact with 4chan's API
 import basc_py4chan
-import re
-import time
+
+# cleanup stuff if we need it
+from .cleanup import html_to_text
+from .converters import TriState
 
 log = logging.getLogger("red.nazucogs.chanfeed")
 DONT_HTML_SCRUB = ["link", "source", "updated", "updated_parsed"]
@@ -164,15 +166,15 @@ class ChanFeed(commands.Cog):
 
         assert isinstance(response.entries, list), "mypy"
 
-        lastPostTimestamp = feed.settings.get("lastPostTimestamp", None)
+        lastPostTimestamp = feed_settings.get("lastPostTimestamp", None)
         lastPostTimestamp = tuple((lastPostTimestamp or (0,))[:6])
 
-        lastCurrentPost = feed_settings.get("lastPostID", None)
-        threadReplyNumber = feed_settings.get("numberOfPosts", None)
+        #lastCurrentPost = feed_settings.get("lastPostID", None)
+        #threadReplyNumber = feed_settings.get("numberOfPosts", None)
 
         # Eventually I want to do some sorting in a much better way
         to_send = sorted(
-            [r for r in response.entries if self.process_entry_timestamp(r) > last],
+            [r for r in response.entries if self.process_entry_timestamp(r) > lastPostTimestamp],
             key=self.process_entry_timestamp,
         )
 
@@ -222,7 +224,7 @@ class ChanFeed(commands.Cog):
         clearComment = reply.text_comment
         # Replace post references with full links to the post
         content = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' + board.name +
-                         '/thread/' + str(thread.num) + r'\1', content)
+                         '/thread/' + str(thread.num) + r'\1', postComment)
 
         # Conditionals
         if reply.thumbnail_url:
@@ -232,7 +234,7 @@ class ChanFeed(commands.Cog):
 
         embedTitle = chanLogoImg + " " + posterName + " " + poster + " " + posterTrip
         embedDesc = "<a href='" + postURL + "'>No. " + str(reply.number) + "</a>"
-        embedFooter = postTimeStamp
+        embedFooter = postTimestamp
 
         if embed:
             if len(content) > 2000:
@@ -246,7 +248,7 @@ class ChanFeed(commands.Cog):
             embedData = discord.Embed(
                 title=embedTitle, description=embedDesc, color=color
             )
-            embedData.add_field(name=fieldNameOne, value=content, inline=false)
+            embedData.add_field(name=fieldNameOne, value=content, inline=False)
             embedData.set_footer(text=embedFooter)
             return {"content": None, "embed": embedData}
         else:
