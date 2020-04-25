@@ -209,14 +209,17 @@ class ChanFeed(commands.Cog):
         last_sent = None
         for entry in to_send:
             color = destination.guild.me.color
-            kwargs = self.format_post(
+            readypost = self.format_post(
                 entry,
                 use_embed,
                 color,
             )
             try:
                 #await self.bot.send_filtered(destination, **kwargs)
-                await self.bot.send_filtered(destination, **kwargs)
+                if readypost['embed']:
+                    await ctx.send(embed=readypost['embed'])
+                elif readypost['content']:
+                    await self.bot.send_filtered(destination, **readypost)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
@@ -265,18 +268,13 @@ class ChanFeed(commands.Cog):
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
-            # . . .
-            # Start the embed here ...
-            # . . .
-            #embed_data = discord.Embed(
-            #        . . .
-            #)
-            embedData = discord.Embed(
-                title=embedTitle, description=embedDesc, color=color
+            timestamp = datetime(*self.process_entry_timestamp(reply))
+            embed_data = discord.Embed(
+                title=embedTitle, description=embedDesc, color=color, timestamp=timestamp
             )
-            embedData.add_field(name=fieldNameOne, value=content, inline=False)
-            embedData.set_footer(text=embedFooter)
-            return {"content": None, "embed": embedData}
+            embed_data.add_field(name=fieldNameOne, value=content, inline=False)
+            embed_data.set_footer(text=embedFooter)
+            return {"content": None, "embed": embed_data}
         else:
             if len(content) > 2000:
                 clearComment = clearComment[:1900] + "... (post is too long)"
@@ -304,10 +302,6 @@ class ChanFeed(commands.Cog):
             debug_exc_log(log, exc)
         else:
             if last:
-                #lastCurrentPost = response.last_reply_id
-                #threadReplyNumber = len(response.replies) - 1
-                #lastReply = response.replies[threadReplyNumber]
-                #lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
                 await self.config.channel(channel).feeds.set_raw(
                     feed_name, "lastPostID", value=last['postnumber']
                 )
