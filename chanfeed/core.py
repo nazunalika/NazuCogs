@@ -12,7 +12,7 @@ import time
 import aiohttp
 import discord
 
-import discordtextsanitizer as dts
+#import discordtextsanitizer as dts
 from redbot.core import commands, checks
 from redbot.core.config import Config
 from redbot.core.utils.chat_formatting import pagify
@@ -135,7 +135,7 @@ class ChanFeed(commands.Cog):
 
     @staticmethod
     def process_entry_timestamp(r):
-        if lastPostTimestamp in x:
+        if "lastPostTimestamp" in r:
             return tuple(r.get("lastPostTimestamp"))[:6]
         return (0,)
 
@@ -233,7 +233,7 @@ class ChanFeed(commands.Cog):
             fieldNameOne = ""
 
         embedTitle = chanLogoImg + " " + posterName + " " + poster + " " + posterTrip
-        embedDesc = "<a href='" + postURL + "'>No. " + str(reply.number) + "</a>"
+        embedDesc = "<a href='" + postURL + "'>No. " + str(posterID) + "</a>"
         embedFooter = postTimestamp
 
         if embed:
