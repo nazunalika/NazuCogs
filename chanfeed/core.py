@@ -126,7 +126,7 @@ class ChanFeed(commands.Cog):
     @staticmethod
     def process_entry_timestamp(r):
         if lastPostTimestamp in x:
-            return r.get("lastPostTimestamp")
+            return tuple(r.get("lastPostTimestamp"))[:6]
         return (0,)
 
     def process_post_number(r):
@@ -156,13 +156,16 @@ class ChanFeed(commands.Cog):
 
         assert isinstance(response.entries, list), "mypy"
 
+        lastPostTimestamp = feed.settings.get("lastPostTimestamp", None)
+        lastPostTimestamp = tuple((lastPostTimestamp or (0,))[:6])
+
         lastCurrentPost = feed_settings.get("lastPostID", None)
         threadReplyNumber = feed_settings.get("numberOfPosts", None)
 
         # Eventually I want to do some sorting in a much better way
         to_send = sorted(
-                [r for r in response.entries if self.process_post_number(r) > last],
-                key=self.process_post_number,
+                [r for r in response.entries if self.process_entry_timestamp(r) > last],
+                key=self.process_entry_timestamp,
         )
 
         last_sent = None
@@ -353,6 +356,7 @@ class ChanFeed(commands.Cog):
 
             else:
                 lastCurrentPost = response.last_reply_id
+                lastTimestamp = list(tuple((time.gmtime(response.timestamp) or (0,)))[:6])
                 threadReplyNumber = len(response.replies) - 1
                 feeds.update(
                     {
@@ -361,6 +365,7 @@ class ChanFeed(commands.Cog):
                             "embed_override": None,
                             "lastPostID": lastCurrentPost,
                             "numberOfPosts": threadReplyNumber,
+                            "lastPostTimestamp": lastTimestamp,
                         }
                     }
                 )
