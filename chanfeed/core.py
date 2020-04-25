@@ -173,7 +173,7 @@ class ChanFeed(commands.Cog):
         if response.last_reply_id > lastCurrentPost:
             loopydata['entries'] = []
             if newReplies > threadReplyNumber:
-                howmany = [i for i in range(f - x, 0)]
+                howmany = [i for i in range(threadReplyNumber - newReplies, 0)]
                 for k in howmany:
                     loopydata['entries'].append(response.replies[k])
             elif newReplies == threadReplyNumber:
