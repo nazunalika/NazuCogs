@@ -455,7 +455,7 @@ class ChanFeed(commands.Cog):
         if await ctx.embed_requested():
             output = "\n".join(
                 (
-                    "{name}: {url}".format(name=k, url=v.get("url", "broken feed..."))
+                    "{name}: {url} - {posts} posts".format(name=k, url=v.get("url", "broken feed..."), posts=v.get("numberOfPosts", "broken feed..."))
                     for k, v in data.items()
                 )
             )
@@ -468,7 +468,7 @@ class ChanFeed(commands.Cog):
         else:
             output = "\n".join(
                 (
-                    "{name}: {url}".format(name=k, url=v.get("url", "broken feed..."))
+                    "{name}: {url} - {posts} posts".format(name=k, url=v.get("url", "broken feed..."), posts=v.get("numberOfPosts", "broken feed..."))
                     for k, v in data.items()
                 )
             )
