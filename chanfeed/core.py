@@ -27,7 +27,7 @@ DONT_HTML_SCRUB = ["link", "source", "updated", "updated_parsed"]
 
 def debug_exc_log(lg: logging.Logger, exc: Exception, msg: str = "Exception in Chan Feed"):
     if lg.getEffectiveLevel() <= logging.DEBUG:
-            lg.exception(msg, exc_info=exc)
+        lg.exception(msg, exc_info=exc)
 
 class ChanFeed(commands.Cog):
     """
@@ -118,9 +118,9 @@ class ChanFeed(commands.Cog):
             return None
         except Exception as exc:
             debug_exc_log(
-                    log,
-                    exc,
-                    f"Unexpected exception type {type(exc)} encountered for {board} -> {thread}",
+                log,
+                exc,
+                f"Unexpected exception type {type(exc)} encountered for {board} -> {thread}",
             )
             return None
 
@@ -172,17 +172,17 @@ class ChanFeed(commands.Cog):
 
         # Eventually I want to do some sorting in a much better way
         to_send = sorted(
-                [r for r in response.entries if self.process_entry_timestamp(r) > last],
-                key=self.process_entry_timestamp,
+            [r for r in response.entries if self.process_entry_timestamp(r) > last],
+            key=self.process_entry_timestamp,
         )
 
         last_sent = None
         for entry in to_send:
             color = destination.guild.me.color
             kwargs = self.format_post(
-                    entry,
-                    use_embed,
-                    color,
+                entry,
+                use_embed,
+                color,
             )
             try:
                 #await self.bot.send_filtered(destination, **kwargs)
@@ -211,18 +211,18 @@ class ChanFeed(commands.Cog):
         replyNumber = len(thread.replies) - 1
         reply = thread.replies[replyNumber]
         # create vars for all relevant pieces of the embed
-        chanLogoImg    = "<img src='https://i.imgur.com/xKI9j3H.png' style='width:20px;height:20px;'/>"
-        postTimestamp  = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
-        postURL        = reply.url
-        posterID       = reply.number
-        posterName     = reply.name
-        poster         = reply.poster_id or ""
-        posterTrip     = reply.tripcode or ""
-        postComment    = reply.comment
-        clearComment   = reply.text_comment
+        chanLogoImg = "<img src='https://i.imgur.com/xKI9j3H.png' style='width:20px;height:20px;'/>"
+        postTimestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
+        postURL = reply.url
+        posterID = reply.number
+        posterName = reply.name
+        poster = reply.poster_id or ""
+        posterTrip = reply.tripcode or ""
+        postComment = reply.comment
+        clearComment = reply.text_comment
         # Replace post references with full links to the post
-        content        = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' +
-        board.name + '/thread/' + str(thread.num) + r'\1', content)
+        content = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' + board.name +
+                         '/thread/' + str(thread.num) + r'\1', content)
 
         # Conditionals
         if reply.thumbnail_url:
@@ -230,8 +230,8 @@ class ChanFeed(commands.Cog):
         else:
             fieldNameOne = ""
 
-        embedTitle  = chanLogoImg + " " + posterName + " " + poster + " " + posterTrip
-        embedDesc   = "<a href='" + postURL + "'>No. " + str(reply.number) + "</a>"
+        embedTitle = chanLogoImg + " " + posterName + " " + poster + " " + posterTrip
+        embedDesc = "<a href='" + postURL + "'>No. " + str(reply.number) + "</a>"
         embedFooter = postTimeStamp
 
         if embed:
@@ -244,7 +244,7 @@ class ChanFeed(commands.Cog):
             #        . . .
             #)
             embedData = discord.Embed(
-                    title=embedTitle, description=embedDesc, color=color
+                title=embedTitle, description=embedDesc, color=color
             )
             embedData.add_field(name=fieldNameOne, value=content, inline=false)
             embedData.set_footer(text=embedFooter)
@@ -267,10 +267,10 @@ class ChanFeed(commands.Cog):
             return
         try:
             last = await self.format_and_send(
-                    destination=channel,
-                    response=response,
-                    feed_settings=feed,
-                    embed_default=should_embed,
+                destination=channel,
+                response=response,
+                feed_settings=feed,
+                embed_default=should_embed,
             )
         except Exception as exc:
             debug_exc_log(log, exc)
@@ -281,15 +281,15 @@ class ChanFeed(commands.Cog):
                 lastReply = response.replies[threadReplyNumber]
                 lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
                 await self.config.channel(channel).feeds.set_raw(
-                        feed_name, "lastPostID", value=lastCurrentPost
+                    feed_name, "lastPostID", value=lastCurrentPost
                 )
 
                 await self.config.channel(channel).feeds.set_raw(
-                        feed_name, "numberOfPosts", value=threadReplyNumber
+                    feed_name, "numberOfPosts", value=threadReplyNumber
                 )
 
                 await self.config.channel(channel).feeds.set_raw(
-                        feed_name, "lastPostTimestamp", value=lastTimestamp
+                    feed_name, "lastPostTimestamp", value=lastTimestamp
                 )
 
 
@@ -319,11 +319,11 @@ class ChanFeed(commands.Cog):
                     feeds_fetched[url] = response
 
                 await self.handle_response_from_loop(
-                        response=response,
-                        channel=channel,
-                        feed=feed,
-                        feed_name=feed_name,
-                        should_embed=should_embed,
+                    response=response,
+                    channel=channel,
+                    feed=feed,
+                    feed_name=feed_name,
+                    should_embed=should_embed,
                 )
 
     async def bg_loop(self):
@@ -365,7 +365,7 @@ class ChanFeed(commands.Cog):
 
             if response is None:
                 return await ctx.send(
-                        f"{name}: That doesn't appear to be a valid thread."
+                    f"{name}: That doesn't appear to be a valid thread."
                 )
 
             else:
@@ -414,11 +414,11 @@ class ChanFeed(commands.Cog):
 
     @chanfeed.command(name="embed")
     async def set_embed(
-        self,
-        ctx,
-        name: str,
-        setting: TriState,
-        channel: Optional[discord.TextChannel] = None,
+            self,
+            ctx,
+            name: str,
+            setting: TriState,
+            channel: Optional[discord.TextChannel] = None,
     ):
         """
         Sets if a feed should use or not use an embed. This uses the default bot
@@ -455,7 +455,11 @@ class ChanFeed(commands.Cog):
         if await ctx.embed_requested():
             output = "\n".join(
                 (
-                    "{name}: {url} - {posts} posts".format(name=k, url=v.get("url", "broken feed..."), posts=v.get("numberOfPosts", "broken feed..."))
+                    "{name}: {url} - {posts} posts".format(
+                        name=k,
+                        url=v.get("url", "broken feed..."),
+                        posts=v.get("numberOfPosts", "broken feed...")
+                    )
                     for k, v in data.items()
                 )
             )
@@ -468,7 +472,11 @@ class ChanFeed(commands.Cog):
         else:
             output = "\n".join(
                 (
-                    "{name}: {url} - {posts} posts".format(name=k, url=v.get("url", "broken feed..."), posts=v.get("numberOfPosts", "broken feed..."))
+                    "{name}: {url} - {posts} posts".format(
+                        name=k,
+                        url=v.get("url", "broken feed..."),
+                        posts=v.get("numberOfPosts", "broken feed...")
+                    )
                     for k, v in data.items()
                 )
             )
