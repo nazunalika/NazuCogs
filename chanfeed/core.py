@@ -128,7 +128,7 @@ class ChanFeed(commands.Cog):
 
         if chanthread.archived:
             # The thread is archived
-            log.debug(f"{board} -> {thread} is archived and is not considered valid.")
+            log.debug(f"The thread is archived and is not considered valid.")
             return None
 
         return chanthread
@@ -191,10 +191,6 @@ class ChanFeed(commands.Cog):
                 await self.bot.send_filtered(destination, **kwargs)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
-            except discord.Forbidden as exc:
-                debug_exc_log(log, exc, "Caught forbidden exception while sending the feed.")
-            except discord.InvalidArgument as exc:
-                debug_exc_log(log, exc, "Invalid argument was caught.")
             last_sent = list(self.process_entry_timestamp(entry))
 
         return last_sent
@@ -442,7 +438,9 @@ class ChanFeed(commands.Cog):
 
     @chanfeed.command(name="list")
     async def list_feeds(
-            self, ctx: commands.GuildContext, channel: Optional[discord.TextChannel] = None
+        self,
+        ctx: commands.GuildContext,
+        channel: Optional[discord.TextChannel] = None
     ):
         """
         Lists the current feeds for the current channel or the one provided.
