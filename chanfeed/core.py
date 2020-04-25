@@ -278,8 +278,8 @@ class ChanFeed(commands.Cog):
             return {"content": None, "embed": embedData}
         else:
             if len(content) > 2000:
-                clearTextContent = clearComment[:1900] + "... (post is too long)"
-            return {"content": clearTextContent, "embed": None}
+                clearComment = clearComment[:1900] + "... (post is too long)"
+            return {"content": clearComment, "embed": None}
 
     async def handle_response_from_loop(
             self,
