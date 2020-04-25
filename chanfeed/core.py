@@ -219,7 +219,8 @@ class ChanFeed(commands.Cog):
                 await self.bot.send_filtered(destination, **kwargs)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
-            last_sent = list(self.process_entry_timestamp(entry))
+            last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
+            #last_sent = list(self.process_entry_timestamp(entry))
 
         return last_sent
 
@@ -303,20 +304,20 @@ class ChanFeed(commands.Cog):
             debug_exc_log(log, exc)
         else:
             if last:
-                lastCurrentPost = response.last_reply_id
-                threadReplyNumber = len(response.replies) - 1
-                lastReply = response.replies[threadReplyNumber]
-                lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
+                #lastCurrentPost = response.last_reply_id
+                #threadReplyNumber = len(response.replies) - 1
+                #lastReply = response.replies[threadReplyNumber]
+                #lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
                 await self.config.channel(channel).feeds.set_raw(
-                    feed_name, "lastPostID", value=lastCurrentPost
+                    feed_name, "lastPostID", value=last['postnumber']
                 )
 
                 await self.config.channel(channel).feeds.set_raw(
-                    feed_name, "numberOfPosts", value=threadReplyNumber
+                    feed_name, "numberOfPosts", value=last['posts']
                 )
 
                 await self.config.channel(channel).feeds.set_raw(
-                    feed_name, "lastPostTimestamp", value=lastTimestamp
+                    feed_name, "lastPostTimestamp", value=last['timestamp']
                 )
 
 
