@@ -23,6 +23,7 @@ import basc_py4chan
 # cleanup stuff if we need it
 #from .cleanup import html_to_text
 from .converters import TriState
+#from .utils import ChanThreadEntry
 
 log = logging.getLogger("red.nazucogs.chanfeed")
 DONT_HTML_SCRUB = ["link", "source", "updated", "updated_parsed"]
@@ -135,14 +136,14 @@ class ChanFeed(commands.Cog):
 
     @staticmethod
     def process_entry_timestamp(r):
-        if "lastPostTimestamp" in r:
-            return tuple(r.get("lastPostTimestamp"))[:6]
+        if r.timestamp:
+            return tuple((time.gmtime(r.timestamp)))[:6]
         return (0,)
 
     @staticmethod
     def process_post_number(r):
-        if "lastPostID" in r:
-            return r.get("lastPostID")
+        if r.number:
+            return r.number
         return 0
 
     async def format_and_send(
@@ -165,24 +166,34 @@ class ChanFeed(commands.Cog):
         if use_embed is None:
             use_embed = embed_default
 
-        assert isinstance(response.entries, list), "mypy"
+        loopydata = {}
+        lastCurrentPost = feed_settings.get("lastPostID", None)
+        threadReplyNumber = feed_settings.get("numberOfPosts", None)
+        newReplies = len(response.replies) - 1
+        if response.last_reply_id > lastCurrentPost:
+            loopydata['entries'] = []
+            if newReplies > threadReplyNumber:
+                howmany = [i for i in range(f - x, 0)]
+                for k in howmany:
+                    loopydata['entries'].append(response.replies[k])
+            elif newReplies == threadReplyNumber:
+                loopydata['entries'].append(response.replies[-1])
+        else:
+            return None
+
+        assert isinstance(loopydata, dict), "mypy"
+        assert isinstance(loopydata['entries'], list), "mypy"
 
         if force:
             try:
-                to_send = [response.entries[0]]
+                to_send = [loopydata['entries'][-1]]
             except IndexError:
                 return None
         else:
-            lastPostTimestamp = feed_settings.get("lastPostTimestamp", None)
-            lastPostTimestamp = tuple((lastPostTimestamp or (0,))[:6])
-
-            #lastCurrentPost = feed_settings.get("lastPostID", None)
-            #threadReplyNumber = feed_settings.get("numberOfPosts", None)
-
             # Eventually I want to do some sorting in a much better way
             to_send = sorted(
-                [r for r in response.entries if self.process_entry_timestamp(r) > lastPostTimestamp],
-                key=self.process_entry_timestamp,
+                [r for r in loopydata['entries'] if self.process_post_number(r) > lastCurrentPost],
+                key=self.process_post_number,
             )
 
         last_sent = None
@@ -333,7 +344,7 @@ class ChanFeed(commands.Cog):
 
     async def bg_loop(self):
         await self.bot.wait_until_ready()
-        while await asyncio.sleep(15, True):
+        while await asyncio.sleep(60, True):
             await self.do_feeds()
 
     # Commands
@@ -374,7 +385,6 @@ class ChanFeed(commands.Cog):
                 )
 
             else:
-                lastCurrentPost = response.last_reply_id
                 threadReplyNumber = len(response.replies) - 1
                 lastReply = response.replies[threadReplyNumber]
                 lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
@@ -384,7 +394,7 @@ class ChanFeed(commands.Cog):
                         name: {
                             "url": url,
                             "embed_override": None,
-                            "lastPostID": lastCurrentPost,
+                            "lastPostID": response.last_reply_id,
                             "numberOfPosts": threadReplyNumber,
                             "lastPostTimestamp": lastTimestamp,
                         }
@@ -525,7 +535,12 @@ class ChanFeed(commands.Cog):
                         embed_default=should_embed,
                         force=True,
                 )
-            except Exception:
+            except Exception as exc:
+                debug_exc_log(
+                    log,
+                    exc,
+                    f"Unexpected exception type {type(exc)} encountered for force feed",
+                )
                 await ctx.send("We caught an error with your request. Try your call again later.")
             else:
                 await ctx.tick()
