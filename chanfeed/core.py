@@ -247,7 +247,7 @@ class ChanFeed(commands.Cog):
         threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, posterID)
         content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', clearComment)
         embedTitle = "%s %s %s" % (posterName, poster, posterTrip)
-        embedDesc = "No. [%s](%s)" % (posterID, postURL)
+        embedDesc = "No. [%s](%s)\r\r%s" % (posterID, postURL, content)
 
         if embed:
             if len(content) > 2000:
@@ -255,10 +255,9 @@ class ChanFeed(commands.Cog):
 
             timestamp = datetime(*self.process_entry_timestamp(reply))
             embed_data = discord.Embed(
-                title=embedTitle, description=embedDesc, color=color, timestamp=timestamp
+                description=embedDesc, color=color, timestamp=timestamp
             )
             embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
-            embed_data.add_field(name=" ", value=content, inline=False)
             embed_data.set_footer(text="Post: ")
 
             if thumbnailURL:
