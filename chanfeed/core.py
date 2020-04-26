@@ -194,10 +194,12 @@ class ChanFeed(commands.Cog):
         assert isinstance(loopydata, dict), "mypy"
         assert isinstance(loopydata['entries'], list), "mypy"
 
-        to_send = sorted(
-            [r for r in loopydata['entries'] if self.process_post_number(r) > lastCurrentPost],
-            key=self.process_post_number,
-        )
+        #to_send = sorted(
+        #    [r for r in loopydata['entries'] if self.process_post_number(r) > lastCurrentPost],
+        #    key=self.process_post_number,
+        #)
+
+        to_send = loopydata['entries']
 
         if force:
             howmany = [i for i in range(threadReplyNumber - newReplies, -1)]
@@ -216,6 +218,7 @@ class ChanFeed(commands.Cog):
                 await self.bot.send_filtered(destination, **readypost)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
+                log.error(exc)
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
 
         return last_sent
@@ -534,6 +537,7 @@ class ChanFeed(commands.Cog):
                     exc,
                     f"Unexpected exception type {type(exc)} encountered for force feed",
                 )
+                log.debug(exc)
                 await ctx.send("We caught an error with your request. Try your call again later.")
             else:
                 await ctx.tick()
