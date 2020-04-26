@@ -216,10 +216,11 @@ class ChanFeed(commands.Cog):
             )
             try:
                 #await self.bot.send_filtered(destination, **kwargs)
-                if readypost['embed']:
-                    await ctx.send(embed=readypost['embed'])
-                elif readypost['content']:
-                    await self.bot.send_filtered(destination, **readypost)
+                await self.bot.send_filtered(destination, **readypost)
+                #if readypost['embed']:
+                #    await ctx.send(embed=readypost['embed'])
+                #elif readypost['content']:
+                #    await self.bot.send_filtered(destination, **readypost)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
