@@ -21,7 +21,7 @@ from redbot.core.utils.chat_formatting import pagify
 import basc_py4chan
 
 # cleanup stuff if we need it
-#from .cleanup import html_to_text
+from .cleanup import html_to_text
 from .converters import TriState
 #from .utils import ChanThreadEntry
 
@@ -185,7 +185,7 @@ class ChanFeed(commands.Cog):
                     loopydata['entries'].append(response.replies[k])
             elif newReplies == threadReplyNumber:
                 loopydata['entries'].append(response.replies[-1])
-        elif force:
+        elif (response.last_reply_id == lastCurrentPost or force):
             loopydata['entries'] = []
             loopydata['entries'].append(response.replies[-1])
         else:
@@ -196,7 +196,7 @@ class ChanFeed(commands.Cog):
 
         if force:
             try:
-                to_send = [loopydata['entries'][-1]]
+                to_send = [loopydata['entries']]
             except IndexError:
                 return None
         else:
@@ -250,7 +250,8 @@ class ChanFeed(commands.Cog):
         thumbnailURL = reply.thumbnail_url
         threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, posterID)
         # Replace post references with full links to the post
-        content = re.sub(r'(\#p\d+)', threadURL + r'\1', postComment)
+        #content = re.sub(r'(\#p\d+)', threadURL + r'\1', postComment)
+        content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', postComment)
 
         # Conditionals
         if reply.thumbnail_url:
@@ -258,14 +259,15 @@ class ChanFeed(commands.Cog):
         else:
             fieldNameOne = " "
 
-        embedTitle = "<img src='%s' style='width:20px;height:20px;'> %s %s %s" % (chanLogoImg, posterName, poster, posterTrip)
-        embedDesc = "<a href='%s'>No. %s</a>" % (postURL, posterID)
+        embedTitle = "%s %s %s" % (posterName, poster, posterTrip)
+        embedDesc = "[%s](%s)" % (posterID, postURL)
 
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
             timestamp = datetime(*self.process_entry_timestamp(reply))
             embed_data = discord.Embed(title=embedTitle, description=embedDesc, color=color)
+            embed_data.set_author(icon_url=chanLogoImg)
             embed_data.add_field(name=fieldNameOne, value=content, inline=False)
             embed_data.set_footer(text=postTimestamp)
             return {"content": None, "embed": embed_data}
