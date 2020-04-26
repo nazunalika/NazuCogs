@@ -185,7 +185,7 @@ class ChanFeed(commands.Cog):
                     loopydata['entries'].append(response.replies[k])
             elif newReplies == threadReplyNumber:
                 loopydata['entries'].append(response.replies[-1])
-        elif response.last_reply_id == lastCurrentPost:
+        elif force:
             loopydata['entries'] = []
             loopydata['entries'].append(response.replies[-1])
         else:
@@ -196,7 +196,11 @@ class ChanFeed(commands.Cog):
 
         if force:
             try:
-                to_send = [loopydata['entries'][-1]]
+                #howmany = [i for i in range(threadReplyNumber - newReplies, 0)]
+                #for k in howmany:
+                    
+                #to_send = [loopydata['entries'][-1]]
+                to_send = loopydata['entries'][-1]
             except IndexError:
                 return None
         else:
@@ -219,7 +223,6 @@ class ChanFeed(commands.Cog):
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
-            #last_sent = list(self.process_entry_timestamp(entry))
 
         return last_sent
 
@@ -267,7 +270,7 @@ class ChanFeed(commands.Cog):
                 content = content[:1999] + "... (post is too long)"
             timestamp = datetime(*self.process_entry_timestamp(reply))
             embed_data = discord.Embed(title=embedTitle, description=embedDesc, color=color)
-            embed_data.set_author(icon_url=chanLogoImg)
+            embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
             embed_data.add_field(name=fieldNameOne, value=content, inline=False)
             embed_data.set_footer(text=postTimestamp)
             return {"content": None, "embed": embed_data}
