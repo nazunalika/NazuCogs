@@ -160,7 +160,6 @@ class ChanFeed(commands.Cog):
             feed_settings: dict,
             embed_default: bool,
             force: bool = False,
-            ctx: commands.GuildContext,
     ) -> Optional[List[int]]:
         """
         Formats and sends and it will update the config of the current number
@@ -214,10 +213,7 @@ class ChanFeed(commands.Cog):
                 color,
             )
             try:
-                if embed:
-                    await ctx.send(embed=entry)
-                else:
-                    await self.bot.send_filtered(destination, **readypost)
+                await self.bot.send_filtered(destination, **readypost)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
@@ -254,11 +250,13 @@ class ChanFeed(commands.Cog):
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
 
-            #timestamp = datetime(*self.process_entry_timestamp(reply))
-            embed_data = discord.Embed(description=embedDesc, color=color)
+            timestamp = datetime(*self.process_entry_timestamp(reply))
+            embed_data = discord.Embed(
+                title=embedTitle, description=embedDesc, color=color, timestamp=timestamp
+            )
             embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
             embed_data.add_field(name=" ", value=content, inline=False)
-            embed_data.set_footer(text=postTimestamp)
+            embed_data.set_footer(text="Post: ")
 
             if thumbnailURL:
                 embed_data.set_image(url=thumbnailURL)
