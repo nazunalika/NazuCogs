@@ -160,6 +160,7 @@ class ChanFeed(commands.Cog):
             feed_settings: dict,
             embed_default: bool,
             force: bool = False,
+            ctx: commands.GuildContext,
     ) -> Optional[List[int]]:
         """
         Formats and sends and it will update the config of the current number
@@ -213,7 +214,10 @@ class ChanFeed(commands.Cog):
                 color,
             )
             try:
-                await self.bot.send_filtered(destination, **readypost)
+                if embed:
+                    await ctx.send(embed=entry)
+                else:
+                    await self.bot.send_filtered(destination, **readypost)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
@@ -227,9 +231,6 @@ class ChanFeed(commands.Cog):
             color,
     ) -> dict:
 
-        # Eventually I want to get this to loop correctly, probably somewhere
-        # else
-
         # ERROR HANDLING PLEASE
         # CHOOSE A BETTER NAME MAYBE
         reply = entry
@@ -242,37 +243,31 @@ class ChanFeed(commands.Cog):
         posterName = reply.name
         poster = reply.poster_id or ""
         posterTrip = reply.tripcode or ""
-        postComment = reply.comment
         clearComment = reply.text_comment
         thumbnailURL = reply.thumbnail_url
         threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, posterID)
-        # Replace post references with full links to the post
-        #content = re.sub(r'(\#p\d+)', threadURL + r'\1', postComment)
-        content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', postComment)
-
-        # Conditionals
-        #if reply.thumbnail_url:
-        #    fieldNameOne = "<img src='%s'/>" % thumbnailURL
-        #else:
-        #    fieldNameOne = " "
-
+        content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', clearComment)
         embedTitle = "%s %s %s" % (posterName, poster, posterTrip)
         embedDesc = "No. [%s](%s)" % (posterID, postURL)
 
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
-            timestamp = datetime(*self.process_entry_timestamp(reply))
+
+            #timestamp = datetime(*self.process_entry_timestamp(reply))
             embed_data = discord.Embed(description=embedDesc, color=color)
             embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
             embed_data.add_field(name=" ", value=content, inline=False)
             embed_data.set_footer(text=postTimestamp)
+
             if thumbnailURL:
                 embed_data.set_image(url=thumbnailURL)
+
             return {"content": None, "embed": embed_data}
         else:
             if len(content) > 2000:
                 clearComment = clearComment[:1900] + "... (post is too long)"
+
             return {"content": clearComment, "embed": None}
 
     async def handle_response_from_loop(
