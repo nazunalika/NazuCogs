@@ -174,12 +174,12 @@ class ChanFeed(commands.Cog):
 
         # ERROR HANDLING PLEASE
         loopydata = {}
-        lastCurrentPost = feed_settings.get("lastPostID", None)
-        threadReplyNumber = feed_settings.get("numberOfPosts", None)
+        lastCurrentPost = int(feed_settings.get("lastPostID", None))
+        threadReplyNumber = int(feed_settings.get("numberOfPosts", None))
         newReplies = len(response.replies) - 1
-        if response.last_reply_id > int(lastCurrentPost):
+        if response.last_reply_id > lastCurrentPost:
             loopydata['entries'] = []
-            if newReplies > int(threadReplyNumber):
+            if newReplies > threadReplyNumber:
                 howmany = [i for i in range(threadReplyNumber - newReplies, 0)]
                 for k in howmany:
                     loopydata['entries'].append(response.replies[k])
