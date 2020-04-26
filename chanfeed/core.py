@@ -194,21 +194,15 @@ class ChanFeed(commands.Cog):
         assert isinstance(loopydata, dict), "mypy"
         assert isinstance(loopydata['entries'], list), "mypy"
 
+        to_send = sorted(
+            [r for r in loopydata['entries'] if self.process_post_number(r) > lastCurrentPost],
+            key=self.process_post_number,
+        )
+
         if force:
-            try:
-                #howmany = [i for i in range(threadReplyNumber - newReplies, 0)]
-                #for k in howmany:
-                    
-                #to_send = [loopydata['entries'][-1]]
-                to_send = loopydata['entries'][-1]
-            except IndexError:
-                return None
-        else:
-            # Eventually I want to do some sorting in a much better way
-            to_send = sorted(
-                [r for r in loopydata['entries'] if self.process_post_number(r) > lastCurrentPost],
-                key=self.process_post_number,
-            )
+            howmany = [i for i in range(threadReplyNumber - newReplies, -1)]
+            for k in howmany:
+                del loopydata['entries'][k]
 
         last_sent = None
         for entry in to_send:
@@ -257,21 +251,22 @@ class ChanFeed(commands.Cog):
         content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', postComment)
 
         # Conditionals
-        if reply.thumbnail_url:
-            fieldNameOne = "<img src='%s'/>" % thumbnailURL
-        else:
-            fieldNameOne = " "
+        #if reply.thumbnail_url:
+        #    fieldNameOne = "<img src='%s'/>" % thumbnailURL
+        #else:
+        #    fieldNameOne = " "
 
         embedTitle = "%s %s %s" % (posterName, poster, posterTrip)
-        embedDesc = "[%s](%s)" % (posterID, postURL)
+        embedDesc = "No. [%s](%s)" % (posterID, postURL)
 
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
             timestamp = datetime(*self.process_entry_timestamp(reply))
-            embed_data = discord.Embed(title=embedTitle, description=embedDesc, color=color)
+            embed_data = discord.Embed(description=embedDesc, color=color)
             embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
-            embed_data.add_field(name=fieldNameOne, value=content, inline=False)
+            embed_data.add_field(name=" ", value=content, inline=False)
+            embed_data.set_image(url=thumbnailURL)
             embed_data.set_footer(text=postTimestamp)
             return {"content": None, "embed": embed_data}
         else:
