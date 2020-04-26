@@ -185,7 +185,7 @@ class ChanFeed(commands.Cog):
                     loopydata['entries'].append(response.replies[k])
             elif newReplies == threadReplyNumber:
                 loopydata['entries'].append(response.replies[-1])
-        elif (response.last_reply_id == lastCurrentPost or force):
+        elif response.last_reply_id == lastCurrentPost:
             loopydata['entries'] = []
             loopydata['entries'].append(response.replies[-1])
         else:
@@ -196,7 +196,7 @@ class ChanFeed(commands.Cog):
 
         if force:
             try:
-                to_send = [loopydata['entries']]
+                to_send = [loopydata['entries'][-1]]
             except IndexError:
                 return None
         else:
