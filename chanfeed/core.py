@@ -177,9 +177,9 @@ class ChanFeed(commands.Cog):
         lastCurrentPost = feed_settings.get("lastPostID", None)
         threadReplyNumber = feed_settings.get("numberOfPosts", None)
         newReplies = len(response.replies) - 1
-        if response.last_reply_id > lastCurrentPost:
+        if response.last_reply_id > int(lastCurrentPost):
             loopydata['entries'] = []
-            if newReplies > threadReplyNumber:
+            if newReplies > int(threadReplyNumber):
                 howmany = [i for i in range(threadReplyNumber - newReplies, 0)]
                 for k in howmany:
                     loopydata['entries'].append(response.replies[k])
@@ -215,12 +215,7 @@ class ChanFeed(commands.Cog):
                 color,
             )
             try:
-                #await self.bot.send_filtered(destination, **kwargs)
                 await self.bot.send_filtered(destination, **readypost)
-                #if readypost['embed']:
-                #    await ctx.send(embed=readypost['embed'])
-                #elif readypost['content']:
-                #    await self.bot.send_filtered(destination, **readypost)
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
             last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
@@ -243,7 +238,7 @@ class ChanFeed(commands.Cog):
         reply = entry
         board = self.url_splitter(reply.url)['board']
         # create vars for all relevant pieces of the embed
-        chanLogoImg = "<img src='https://i.imgur.com/xKI9j3H.png' style='width:20px;height:20px;'/>"
+        chanLogoImg = "https://i.imgur.com/xKI9j3H.png"
         postTimestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
         postURL = reply.url
         posterID = reply.number
@@ -252,29 +247,27 @@ class ChanFeed(commands.Cog):
         posterTrip = reply.tripcode or ""
         postComment = reply.comment
         clearComment = reply.text_comment
+        thumbnailURL = reply.thumbnail_url
+        threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, posterID)
         # Replace post references with full links to the post
-        content = re.sub(r'(\#p\d+)', 'https://boards.4chan.org/' + board +
-                         '/thread/' + str(posterID) + r'\1', postComment)
+        content = re.sub(r'(\#p\d+)', threadURL + r'\1', postComment)
 
         # Conditionals
         if reply.thumbnail_url:
-            fieldNameOne = "<img src='" + reply.thumbnail_url + "'/>"
+            fieldNameOne = "<img src='%s'/>" % thumbnailURL
         else:
-            fieldNameOne = ""
+            fieldNameOne = " "
 
-        embedTitle = chanLogoImg + " " + posterName + " " + poster + " " + posterTrip
-        embedDesc = "<a href='" + postURL + "'>No. " + str(posterID) + "</a>"
-        embedFooter = postTimestamp
+        embedTitle = "<img src='%s' style='width:20px;height:20px;'> %s %s %s" % (chanLogoImg, posterName, poster, posterTrip)
+        embedDesc = "<a href='%s'>No. %s</a>" % (postURL, posterID)
 
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
             timestamp = datetime(*self.process_entry_timestamp(reply))
-            embed_data = discord.Embed(
-                title=embedTitle, description=embedDesc, color=color, timestamp=timestamp
-            )
+            embed_data = discord.Embed(title=embedTitle, description=embedDesc, color=color)
             embed_data.add_field(name=fieldNameOne, value=content, inline=False)
-            embed_data.set_footer(text=embedFooter)
+            embed_data.set_footer(text=postTimestamp)
             return {"content": None, "embed": embed_data}
         else:
             if len(content) > 2000:
