@@ -263,7 +263,7 @@ class ChanFeed(commands.Cog):
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
             timestamp = datetime(*self.process_entry_timestamp(reply))
-            embed_data = discord.Embed(title="" description=embedDesc, color=color)
+            embed_data = discord.Embed(title="", description=embedDesc, color=color)
             embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
             embed_data.add_field(name=" ", value=content, inline=False)
             embed_data.set_image(url=thumbnailURL)
