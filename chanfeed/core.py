@@ -258,7 +258,7 @@ class ChanFeed(commands.Cog):
                 description=embedDesc, color=color, timestamp=timestamp
             )
             embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
-            embed_data.set_footer(text="Post: ")
+            embed_data.set_footer(text="Timestamp: ")
 
             if thumbnailURL:
                 embed_data.set_image(url=thumbnailURL)
@@ -537,7 +537,7 @@ class ChanFeed(commands.Cog):
                     f"Unexpected exception type {type(exc)} encountered for force feed",
                 )
                 log.debug(exc)
-                await ctx.send("We caught an error with your request. Try your call again later.")
+                await ctx.send(f"We caught an error with your request. Try your call again later.\rMessage: {exc}")
             else:
                 await ctx.tick()
         else:
