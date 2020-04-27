@@ -34,6 +34,10 @@ This cog will assist in following a 4chan thread on any board. It will check eve
 
 **Todo**
 
+* Check if the currently added thread is archived or 404, stop the feed, notify, and delete from the configuration.
+
+  * Currently, only new threads being added with `addfeed` are checked for archived status and error out upon attempt.
+
 * Provide a method to allow templates to change from default embed look.
 * Provide a regex that catches new thread references so it doesn't get mistaken as a reply to a previous comment
 * Provide a regex that catches board cross-linking, including cross-linking to a board *and* thread
