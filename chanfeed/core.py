@@ -21,12 +21,9 @@ from redbot.core.utils.chat_formatting import pagify
 import basc_py4chan
 
 # cleanup stuff if we need it
-from .cleanup import html_to_text
 from .converters import TriState
-#from .utils import ChanThreadEntry
 
 log = logging.getLogger("red.nazucogs.chanfeed")
-DONT_HTML_SCRUB = ["link", "source", "updated", "updated_parsed"]
 
 def debug_exc_log(lg: logging.Logger, exc: Exception, msg: str = "Exception in Chan Feed"):
     if lg.getEffectiveLevel() <= logging.DEBUG:
@@ -41,7 +38,7 @@ class ChanFeed(commands.Cog):
     """
 
     __author__ = "nazunalika (Sokel)"
-    __version__ = "330.0.1"
+    __version__ = "330.0.2"
 
     # help formatter
     def format_help_for_context(self, ctx):
@@ -118,7 +115,8 @@ class ChanFeed(commands.Cog):
         split = self.url_splitter(url)
         # We don't really need this right now unless I decide to do a full
         # "built-in" of the py4chan plugin. But it's good to know if we can
-        # connect or not and bomb out when we can't.
+        # connect or not and bomb out when we can't. Who knows what py4chan
+        # can do in that instance.
         urlGeneration = 'https://a.4cdn.org/' + split['board'] + '/thread/' + split['thread'] + '.json'
         try:
             async with self.session.get(urlGeneration, timeout=timeout) as response:
@@ -193,11 +191,6 @@ class ChanFeed(commands.Cog):
 
         assert isinstance(loopydata, dict), "mypy"
         assert isinstance(loopydata['entries'], list), "mypy"
-
-        #to_send = sorted(
-        #    [r for r in loopydata['entries'] if self.process_post_number(r) > lastCurrentPost],
-        #    key=self.process_post_number,
-        #)
 
         to_send = loopydata['entries']
 

@@ -32,6 +32,8 @@ This cog will assist in following a 4chan thread on any board. It will check eve
 | force    | <name> [channel]                    | Show last post    |
 +----------+-------------------------------------+-------------------+
 
+.. image:: examples/chanfeed.jpg
+
 **Todo**
 
 * Check if the currently added thread is archived or 404, stop the feed, notify, and delete from the configuration.
