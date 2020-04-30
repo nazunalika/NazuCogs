@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import string
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
@@ -38,7 +37,7 @@ class ChanFeed(commands.Cog):
     """
 
     __author__ = "nazunalika (Sokel)"
-    __version__ = "330.0.2"
+    __version__ = "330.0.3"
 
     # help formatter
     def format_help_for_context(self, ctx):
@@ -94,12 +93,6 @@ class ChanFeed(commands.Cog):
         return (0,)
 
     @staticmethod
-    def process_post_number(r):
-        if r.number:
-            return r.number
-        return 0
-
-    @staticmethod
     def url_splitter(data):
         urlSplit = data.rsplit('/', 3)
         output = {}
@@ -145,7 +138,7 @@ class ChanFeed(commands.Cog):
 
         if chanthread.archived:
             # The thread is archived
-            log.debug(f"The thread is archived and is not considered valid.")
+            log.debug(f"The thread {board}/{thread} is archived and is not considered valid.")
             return None
 
         return chanthread
@@ -228,7 +221,7 @@ class ChanFeed(commands.Cog):
         reply = entry
         board = self.url_splitter(reply.url)['board']
         # create vars for all relevant pieces of the embed
-        chanLogoImg = "https://i.imgur.com/xKI9j3H.png"
+        chanLogoImg = "https://i.imgur.com/qwj5bL2.png"
         postTimestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
         postURL = reply.url
         posterID = reply.number
@@ -517,11 +510,11 @@ class ChanFeed(commands.Cog):
             should_embed = await self.should_embed(ctx.channel)
             try:
                 await self.format_and_send(
-                        destination=channel,
-                        response=response,
-                        feed_settings=feeds[feed],
-                        embed_default=should_embed,
-                        force=True,
+                    destination=channel,
+                    response=response,
+                    feed_settings=feeds[feed],
+                    embed_default=should_embed,
+                    force=True,
                 )
             except Exception as exc:
                 debug_exc_log(
