@@ -93,6 +93,10 @@ class ChanFeed(commands.Cog):
         return (0,)
 
     @staticmethod
+    def check_thread_archival(r):
+        return True
+
+    @staticmethod
     def url_splitter(data):
         urlSplit = data.rsplit('/', 3)
         output = {}
@@ -110,10 +114,10 @@ class ChanFeed(commands.Cog):
         # "built-in" of the py4chan plugin. But it's good to know if we can
         # connect or not and bomb out when we can't. Who knows what py4chan
         # can do in that instance.
-        urlGeneration = 'https://a.4cdn.org/' + split['board'] + '/thread/' + split['thread'] + '.json'
+        #urlGeneration = 'https://a.4cdn.org/' + split['board'] + '/thread/' + split['thread'] + '.json'
         try:
-            async with self.session.get(urlGeneration, timeout=timeout) as response:
-                data = await response.read()
+            #async with self.session.get(urlGeneration, timeout=timeout) as response:
+            #    data = await response.read()
             chanboard = basc_py4chan.Board(split['board'])
             chanthread = chanboard.get_thread(split['thread'])
             if chanboard.title is not None:
