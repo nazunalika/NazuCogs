@@ -12,7 +12,6 @@
     ],
     "hidden": false,
     "requirements": [
-        "feedparser>=6.0.0b1",
         "discord-text-sanitizer",
         "basc_py4chan"
     ],
