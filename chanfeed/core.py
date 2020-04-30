@@ -367,7 +367,8 @@ class ChanFeed(commands.Cog):
 
             if response is None:
                 return await ctx.send(
-                    f"{name}: That doesn't appear to be a valid thread."
+                    f"That doesn't appear to be a valid thread. Thread is
+                    either archived, or the board/thread does not exist."
                 )
 
             else:
