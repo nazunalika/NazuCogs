@@ -104,20 +104,28 @@ class ChanFeed(commands.Cog):
         output['thread'] = urlSplit[3]
         return output
 
+    @staticmethod
+    def check_thread_replies(r):
+        if len(response.replies) == 0:
+            threadReplyNumber = 0
+            lastReply = response.topic
+        else:
+            threadReplyNumber = len(response.replies) - 1
+            lastReply = response.replies[threadReplyNumber]
+
+        output = {}
+        output['threadReplyNumber'] = threadReplyNumber
+        output['lastReply'] = lastReply
+
+        return output
+
     # fetch the feed here
     # Check that the board exists and then check the thread exists
     async def fetch_feed(self, url: str):
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
         split = self.url_splitter(url)
-        # We don't really need this right now unless I decide to do a full
-        # "built-in" of the py4chan plugin. But it's good to know if we can
-        # connect or not and bomb out when we can't. Who knows what py4chan
-        # can do in that instance.
-        #urlGeneration = 'https://a.4cdn.org/' + split['board'] + '/thread/' + split['thread'] + '.json'
         try:
-            #async with self.session.get(urlGeneration, timeout=timeout) as response:
-            #    data = await response.read()
             chanboard = basc_py4chan.Board(split['board'])
             chanthread = chanboard.get_thread(split['thread'])
             if chanboard.title is not None:
@@ -125,12 +133,15 @@ class ChanFeed(commands.Cog):
                     pass
         except (aiohttp.ClientError, asyncio.TimeoutError):
             # We couldn't connect
+            log.debug(f"We could not connect to 4chan.org")
             return None
         except KeyError:
             # The board doesn't exist
+            log.debug(f"The specified board {board} does not exist")
             return None
         except AttributeError:
             # The thread doesn't exist
+            log.debug(f"The specified thread {thread} does not exist")
             return None
         except Exception as exc:
             debug_exc_log(
@@ -367,7 +378,9 @@ class ChanFeed(commands.Cog):
 
             if response is None:
                 return await ctx.send(
-                    f"That doesn't appear to be a valid thread. Thread is either archived, or the board/thread does not exist."
+                    f"That doesn't appear to be a valid thread. "
+                    f"Thread is either archived, or the board/thread does not exist."
+                    f"\n\nCheck the bot logs for more information."
                 )
 
             else:
