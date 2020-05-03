@@ -384,6 +384,10 @@ class ChanFeed(commands.Cog):
                 )
 
             else:
+                # We don't know if .posts or .all_posts would be appropriate
+                # I don't seem to understand what they mean by "omitted" in the
+                # 4chan API documentation. So we're using .replies instead for
+                # now. https://github.com/nazunalika/NazuCogs/issues/6
                 if len(response.replies) == 0:
                     threadReplyNumber = 0
                     lastReply = response.topic
