@@ -249,7 +249,8 @@ class ChanFeed(commands.Cog):
         poster = reply.poster_id or ""
         poster_trip = reply.tripcode or ""
         clear_comment = reply.text_comment
-        thumbnail_url = reply.thumbnail_url
+        thumbnail_url = reply.file_url
+        #thumbnail_url = reply.thumbnail_url
         #thread_url = 'https://boards.4chan.org/%s/thread/%s' % (board, current_thread)
 
         # Convert the reply.url to https while removing the #p... reply - I
