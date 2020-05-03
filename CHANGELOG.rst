@@ -4,9 +4,5 @@ Changelog
 chanfeed
 --------
 
-* Changed image link on imgur
-* Removed unnecessary imports
-* Removed unused @staticmethod functions
-* Fixed some indentation issues according to pylint
-* Increment version number
-
+* Fix regex problem for post references going to invalid threads
+* Added regex for cross-linking (board + board/thread)

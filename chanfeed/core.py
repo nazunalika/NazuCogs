@@ -235,6 +235,7 @@ class ChanFeed(commands.Cog):
         # CHOOSE A BETTER NAME MAYBE
         reply = entry
         board = self.url_splitter(reply.url)['board']
+        current_thread = self.url_splitter(reply.url)['thread']
         # create vars for all relevant pieces of the embed
         chanLogoImg = "https://i.imgur.com/qwj5bL2.png"
         postTimestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
@@ -245,8 +246,13 @@ class ChanFeed(commands.Cog):
         posterTrip = reply.tripcode or ""
         clearComment = reply.text_comment
         thumbnailURL = reply.thumbnail_url
-        threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, posterID)
+        threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, current_thread)
         content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', clearComment)
+        # I want a better way of handling these at some point, but this is the
+        # closest I could get to for cross-linking. It may or may not be
+        # consistent. I may want to try conditionals since python supports it.
+        content = re.sub(r'>{3}(/[a-z0-9]+/(?!\d+))', r'[>>>\1](https://boards.4chan.org\1)', content)
+        content = re.sub(r'>{3}(/[a-z0-9]+/)(\d+)', r'[>>>\1\2](https://boards.4chan.org\1thread/\2)', content)
         embedTitle = "%s %s %s" % (posterName, poster, posterTrip)
         embedDesc = "No. [%s](%s)\r\r%s" % (posterID, postURL, content)
 
