@@ -98,24 +98,24 @@ class ChanFeed(commands.Cog):
 
     @staticmethod
     def url_splitter(data):
-        urlSplit = data.rsplit('/', 3)
+        url_split = data.rsplit('/', 3)
         output = {}
-        output['board'] = urlSplit[1]
-        output['thread'] = urlSplit[3]
+        output['board'] = url_split[1]
+        output['thread'] = url_split[3]
         return output
 
     @staticmethod
     def check_thread_replies(r):
         if len(response.replies) == 0:
-            threadReplyNumber = 0
-            lastReply = response.topic
+            thread_reply_number = 0
+            last_reply = response.topic
         else:
-            threadReplyNumber = len(response.replies) - 1
-            lastReply = response.replies[threadReplyNumber]
+            thread_reply_number = len(response.replies) - 1
+            last_reply = response.replies[thread_reply_number]
 
         output = {}
-        output['threadReplyNumber'] = threadReplyNumber
-        output['lastReply'] = lastReply
+        output['thread_reply_number'] = thread_reply_number
+        output['last_reply'] = last_reply
 
         return output
 
@@ -180,16 +180,16 @@ class ChanFeed(commands.Cog):
 
         # ERROR HANDLING PLEASE
         loopydata = {}
-        lastCurrentPost = int(feed_settings.get("lastPostID", None))
-        threadReplyNumber = int(feed_settings.get("numberOfPosts", None))
-        newReplies = len(response.replies) - 1
-        if response.last_reply_id > lastCurrentPost:
+        last_current_post = int(feed_settings.get("lastPostID", None))
+        thread_reply_number = int(feed_settings.get("numberOfPosts", None))
+        new_replies = len(response.replies) - 1
+        if response.last_reply_id > last_current_post:
             loopydata['entries'] = []
-            if newReplies > threadReplyNumber:
-                howmany = [i for i in range(threadReplyNumber - newReplies, 0)]
+            if new_replies > thread_reply_number:
+                howmany = [i for i in range(thread_reply_number - new_replies, 0)]
                 for k in howmany:
                     loopydata['entries'].append(response.replies[k])
-            elif newReplies == threadReplyNumber:
+            elif new_replies == thread_reply_number:
                 loopydata['entries'].append(response.replies[-1])
         elif force:
             loopydata['entries'] = []
@@ -203,7 +203,7 @@ class ChanFeed(commands.Cog):
         to_send = loopydata['entries']
 
         if force:
-            howmany = [i for i in range(threadReplyNumber - newReplies, -1)]
+            howmany = [i for i in range(thread_reply_number - new_replies, -1)]
             for k in howmany:
                 del loopydata['entries'][k]
 
@@ -220,7 +220,11 @@ class ChanFeed(commands.Cog):
             except discord.HTTPException as exc:
                 debug_exc_log(log, exc, "Caught exception while sending the feed.")
                 log.error(exc)
-            last_sent = {'timestamp': list(self.process_entry_timestamp(entry)), 'postnumber': str(entry.number), 'posts': str(newReplies)}
+            last_sent = {
+                'timestamp': list(self.process_entry_timestamp(entry)),
+                'postnumber': str(entry.number),
+                'posts': str(new_replies)
+            }
 
         return last_sent
 
@@ -234,27 +238,42 @@ class ChanFeed(commands.Cog):
         # ERROR HANDLING PLEASE
         # CHOOSE A BETTER NAME MAYBE
         reply = entry
-        board = self.url_splitter(reply.url)['board']
-        current_thread = self.url_splitter(reply.url)['thread']
+        #board = self.url_splitter(reply.url)['board']
+        #current_thread = re.sub('#p\d+', '', self.url_splitter(reply.url)['thread'])
         # create vars for all relevant pieces of the embed
-        chanLogoImg = "https://i.imgur.com/qwj5bL2.png"
-        postTimestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
-        postURL = reply.url
-        posterID = reply.number
-        posterName = reply.name
+        chan_logo_img = "https://i.imgur.com/qwj5bL2.png"
+        post_timestamp = time.strftime('%m/%d/%y (%a) %H:%M:%S', time.localtime(reply.timestamp))
+        post_url = reply.url
+        poster_id = reply.number
+        poster_name = reply.name
         poster = reply.poster_id or ""
-        posterTrip = reply.tripcode or ""
-        clearComment = reply.text_comment
-        thumbnailURL = reply.thumbnail_url
-        threadURL = 'https://boards.4chan.org/%s/thread/%s' % (board, current_thread)
-        content = re.sub(r'>{2}(\d+)', r'[>>\1](' + threadURL + r'#p\1)', clearComment)
+        poster_trip = reply.tripcode or ""
+        clear_comment = reply.text_comment
+        thumbnail_url = reply.thumbnail_url
+        #thread_url = 'https://boards.4chan.org/%s/thread/%s' % (board, current_thread)
+
+        # Convert the reply.url to https while removing the #p... reply - I
+        # can't think of a better way of doing this for creating reply links in
+        # the embeds
+        thread_url = re.sub(
+            r'http:\/\/boards\.4chan\.org\/([a-z0-9]+)\/thread\/(\d+)(#p\d+)',
+            r'https://boards.4chan.org/\1/thread/\2',
+            reply.url
+        )
+        content = re.sub(r'>{2}(\d+)', r'[>>\1](' + thread_url + r'#p\1)', clear_comment)
         # I want a better way of handling these at some point, but this is the
         # closest I could get to for cross-linking. It may or may not be
         # consistent. I may want to try conditionals since python supports it.
+
+        # Search for a cross-link via >>>/.../, negating any digits via
+        # lookahead after the final /
         content = re.sub(r'>{3}(/[a-z0-9]+/(?!\d+))', r'[>>>\1](https://boards.4chan.org\1)', content)
+
+        # Search for cross-lin via >>>/.../..., accepting any digits after the
+        # final / as another capture group
         content = re.sub(r'>{3}(/[a-z0-9]+/)(\d+)', r'[>>>\1\2](https://boards.4chan.org\1thread/\2)', content)
-        embedTitle = "%s %s %s" % (posterName, poster, posterTrip)
-        embedDesc = "No. [%s](%s)\r\r%s" % (posterID, postURL, content)
+        embed_title = "%s %s %s" % (poster_name, poster, poster_trip)
+        embed_desc = "No. [%s](%s)\r\r%s" % (poster_id, post_url, content)
 
         if embed:
             if len(content) > 2000:
@@ -262,20 +281,20 @@ class ChanFeed(commands.Cog):
 
             timestamp = datetime(*self.process_entry_timestamp(reply))
             embed_data = discord.Embed(
-                description=embedDesc, color=color, timestamp=timestamp
+                description=embed_desc, color=color, timestamp=timestamp
             )
-            embed_data.set_author(name=embedTitle, icon_url=chanLogoImg)
+            embed_data.set_author(name=embed_title, icon_url=chan_logo_img)
             embed_data.set_footer(text="Timestamp: ")
 
-            if thumbnailURL:
-                embed_data.set_image(url=thumbnailURL)
+            if thumbnail_url:
+                embed_data.set_image(url=thumbnail_url)
 
             return {"content": None, "embed": embed_data}
         else:
             if len(content) > 2000:
-                clearComment = clearComment[:1900] + "... (post is too long)"
+                clear_comment = clear_comment[:1900] + "... (post is too long)"
 
-            return {"content": clearComment, "embed": None}
+            return {"content": clear_comment, "embed": None}
 
     async def handle_response_from_loop(
             self,
@@ -395,13 +414,13 @@ class ChanFeed(commands.Cog):
                 # 4chan API documentation. So we're using .replies instead for
                 # now. https://github.com/nazunalika/NazuCogs/issues/6
                 if len(response.replies) == 0:
-                    threadReplyNumber = 0
-                    lastReply = response.topic
+                    thread_reply_number = 0
+                    last_reply = response.topic
                 else:
-                    threadReplyNumber = len(response.replies) - 1
-                    lastReply = response.replies[threadReplyNumber]
+                    thread_reply_number = len(response.replies) - 1
+                    last_reply = response.replies[thread_reply_number]
 
-                lastTimestamp = list(tuple((time.gmtime(lastReply.timestamp) or (0,)))[:7])
+                last_timestamp = list(tuple((time.gmtime(last_reply.timestamp) or (0,)))[:7])
 
                 feeds.update(
                     {
@@ -409,8 +428,8 @@ class ChanFeed(commands.Cog):
                             "url": url,
                             "embed_override": None,
                             "lastPostID": response.last_reply_id,
-                            "numberOfPosts": threadReplyNumber,
-                            "lastPostTimestamp": lastTimestamp,
+                            "numberOfPosts": thread_reply_number,
+                            "lastPostTimestamp": last_timestamp,
                         }
                     }
                 )
