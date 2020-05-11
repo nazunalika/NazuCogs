@@ -126,6 +126,9 @@ class ChanFeed(commands.Cog):
         # SPLIT OUT THE URL HERE
         split = self.url_splitter(url)
         try:
+            async with self.session.get(url, timeout=timeout) as response:
+                data = await response.read()
+
             chanboard = basc_py4chan.Board(split['board'])
             chanthread = chanboard.get_thread(split['thread'])
             if chanboard.title is not None:
