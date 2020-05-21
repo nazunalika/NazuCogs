@@ -125,8 +125,9 @@ class ChanFeed(commands.Cog):
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
         split = self.url_splitter(url)
+        url_generation = 'https://a.4cdn.org/' + split['board'] + '/thread/' + split['thread'] + '.json'
         try:
-            async with self.session.get(url, timeout=timeout) as response:
+            async with self.session.get(url_generation, timeout=timeout) as response:
                 data = await response.read()
 
             chanboard = basc_py4chan.Board(split['board'])
@@ -137,14 +138,29 @@ class ChanFeed(commands.Cog):
         except (aiohttp.ClientError, asyncio.TimeoutError):
             # We couldn't connect
             log.debug(f"We could not connect to 4chan.org")
+            debug_exc_log(
+                log,
+                exc,
+                f"We could not connect to 4chan.org.",
+            )
             return None
         except KeyError:
             # The board doesn't exist
             log.debug(f"The specified board {board} does not exist")
+            debug_exc_log(
+                log,
+                exc,
+                f"The specified board {board} does not exist.",
+            )
             return None
         except AttributeError:
             # The thread doesn't exist
             log.debug(f"The specified thread {thread} does not exist")
+            debug_exc_log(
+                log,
+                exc,
+                f"The specified thread {thread} does not exist.",
+            )
             return None
         except Exception as exc:
             debug_exc_log(
