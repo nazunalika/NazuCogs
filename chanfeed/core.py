@@ -196,7 +196,10 @@ class ChanFeed(commands.Cog):
                 loopydata['entries'].append(response.replies[-1])
         elif force:
             loopydata['entries'] = []
-            loopydata['entries'].append(response.replies[-1])
+            if thread_reply_number == 0:
+                loopydata['entries'].append(response.op)
+            else:
+                loopydata['entries'].append(response.replies[-1])
         else:
             return None
 
@@ -206,9 +209,10 @@ class ChanFeed(commands.Cog):
         to_send = loopydata['entries']
 
         if force:
-            howmany = [i for i in range(thread_reply_number - new_replies, -1)]
-            for k in howmany:
-                del loopydata['entries'][k]
+            if response.replies != 0:
+                howmany = [i for i in range(thread_reply_number - new_replies, -1)]
+                for k in howmany:
+                    del loopydata['entries'][k]
 
         last_sent = None
         for entry in to_send:
@@ -277,7 +281,7 @@ class ChanFeed(commands.Cog):
         # final / as another capture group
         content = re.sub(r'>{3}(/[a-z0-9]+/)(\d+)', r'[>>>\1\2](https://boards.4chan.org\1thread/\2)', content)
         embed_title = "%s %s %s" % (poster_name, poster, poster_trip)
-        embed_desc = "No. [%s](%s)\r\r%s" % (poster_id, post_url, content)
+        embed_desc = "[No. %s](%s)\r\r%s" % (poster_id, post_url, content)
 
         if embed:
             if len(content) > 2000:
