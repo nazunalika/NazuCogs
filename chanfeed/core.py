@@ -23,6 +23,7 @@ import basc_py4chan
 from .converters import TriState
 
 log = logging.getLogger("red.nazucogs.chanfeed")
+log.setLevel(logging.DEBUG)
 
 def debug_exc_log(lg: logging.Logger, exc: Exception, msg: str = "Exception in Chan Feed"):
     if lg.getEffectiveLevel() <= logging.DEBUG:
@@ -54,6 +55,7 @@ class ChanFeed(commands.Cog):
         self.config.register_channel(feeds={})
         self.session = aiohttp.ClientSession()
         self.bg_loop_task: Optional[asyncio.Task] = None
+        #self._init_logger()
 
     # background sync
     def init(self):
