@@ -297,7 +297,7 @@ class ChanFeed(commands.Cog):
         # Search for cross-lin via >>>/.../..., accepting any digits after the
         # final / as another capture group
         content = re.sub(r'>{3}(/[a-z0-9]+/)(\d+)', r'[>>>\1\2](https://boards.4chan.org\1thread/\2)', content)
-        embed_title = "%s %s %s" % (poster_name, poster, poster_trip)
+        embed_title = "%s %s %s" % (poster_name, poster_trip, poster)
         embed_desc = "[No. %s](%s)\r\r%s" % (poster_id, post_url, content)
 
         if embed:
