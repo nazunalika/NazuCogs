@@ -27,6 +27,8 @@ This cog will assist in following a 4chan thread on any board. It will check eve
 +----------+-------------------------------------+-------------------+
 | list     | (no arguments)                      | current channel   |
 +----------+-------------------------------------+-------------------+
+| stats    | <name> [channel]                    |                   |
++----------+-------------------------------------+-------------------+
 | embed    | <name> True/False/Default [channel] | Fancy vs Regular  |
 +----------+-------------------------------------+-------------------+
 | force    | <name> [channel]                    | Show last post    |

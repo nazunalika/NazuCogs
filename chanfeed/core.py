@@ -120,6 +120,11 @@ class ChanFeed(commands.Cog):
 
         return output
 
+    @staticmethod
+    def thread_is_archived(t):
+        archived_comment = "Thread (%s) is archived" % (t)
+        return {"content": archived_comment, "embed": None}
+
     # fetch the feed here
     # Check that the board exists and then check the thread exists
     async def fetch_feed(self, url: str):
@@ -225,12 +230,15 @@ class ChanFeed(commands.Cog):
 
         to_send = loopydata['entries']
 
+        # We just want to force out the last post here, we don't care about the
+        # other posts
         if force:
             if response.replies != 0:
                 howmany = [i for i in range(thread_reply_number - new_replies, -1)]
                 for k in howmany:
                     del loopydata['entries'][k]
 
+        # Format the post and then try to send it out
         last_sent = None
         for entry in to_send:
             color = destination.guild.me.color
@@ -249,6 +257,8 @@ class ChanFeed(commands.Cog):
                 'postnumber': str(entry.number),
                 'posts': str(new_replies)
             }
+
+        # We should send a message here if the thread is detected as archived
 
         return last_sent
 
@@ -300,6 +310,7 @@ class ChanFeed(commands.Cog):
         embed_title = "%s %s %s" % (poster_name, poster_trip, poster)
         embed_desc = "[No. %s](%s)\r\r%s" % (poster_id, post_url, content)
 
+        # Prepare the data that is to be sent, either in an embed or plain text
         if embed:
             if len(content) > 2000:
                 content = content[:1999] + "... (post is too long)"
@@ -330,6 +341,9 @@ class ChanFeed(commands.Cog):
             feed_name: str,
             should_embed: bool,
     ):
+        # If the response is none, just skip. Otherwise, we're going to go
+        # ahead and try format and send the message. If anything changed or a
+        # post was provided, we'll update our configuration.
         if not response:
             return
         try:
@@ -370,6 +384,19 @@ class ChanFeed(commands.Cog):
                 await self.config.channel(channel).feeds.set_raw(
                     feed_name, "isAtBumpLimit", value=response.bumplimit
                 )
+
+        # There should be a more elegant way to do this, but here we'll just
+        # send a message about the thread being archived and then removed it
+        # from configuration
+
+        if response.archived:
+            # Get thread archived message
+            archivepost = thread_is_archived(feed_name)
+            # Send it
+            await self.bot.send_filtered(channel, **archivepost)
+            # Remove the configuration
+            async with self.config.channel(channel).feeds() as feeds:
+                del feeds[feed_name]
 
     async def do_feeds(self):
         feeds_fetched: Dict[str, Any] = {}
