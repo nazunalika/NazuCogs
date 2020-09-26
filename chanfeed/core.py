@@ -355,6 +355,21 @@ class ChanFeed(commands.Cog):
                     feed_name, "lastPostTimestamp", value=last['timestamp']
                 )
 
+                await self.config.channel(channel).feeds.set_raw(
+                    feed_name, "numberOfImages", value=response.num_images
+                )
+
+                await self.config.channel(channel).feeds.set_raw(
+                    feed_name, "isArchived", value=response.archived
+                )
+
+                await self.config.channel(channel).feeds.set_raw(
+                    feed_name, "isSticky", value=response.sticky
+                )
+
+                await self.config.channel(channel).feeds.set_raw(
+                    feed_name, "isAtBumpLimit", value=response.bumplimit
+                )
 
     async def do_feeds(self):
         feeds_fetched: Dict[str, Any] = {}
@@ -455,6 +470,10 @@ class ChanFeed(commands.Cog):
                             "lastPostID": response.last_reply_id,
                             "numberOfPosts": thread_reply_number,
                             "lastPostTimestamp": last_timestamp,
+                            "numberOfImages": response.num_images,
+                            "isArchived": response.archived,
+                            "isSticky": response.sticky,
+                            "isAtBumpLimit": response.bumplimit,
                         }
                     }
                 )
@@ -558,6 +577,74 @@ class ChanFeed(commands.Cog):
             for page in pagify(output):
                 await ctx.send(page)
 
+    @chanfeed.command(name="stats")
+    async def stats_feeds(
+            self,
+            ctx: commands.GuildContext,
+            feed,
+            channel: Optional[discord.TextChannel] = None
+    ):
+        """
+        Displays the stats for a particular thread feed
+        """
+
+        channel = channel or ctx.channel
+        feeds = await self.config.channel(channel).feeds()
+        data = await self.config.channel(channel).feeds()
+        url = None
+
+        if feed in feeds:
+            url = feeds[feed].get("url", None)
+
+        if url is None:
+            return await ctx.send("There is no such feed available. Try your call again later.")
+
+        if not data:
+            return await ctx.send(f"{channel}: No feeds.")
+
+        response = await self.fetch_feed(url)
+
+        if await ctx.embed_requested():
+            output = "\n".join(
+                (
+                    "**{name}: {url}**\n**Replies**: {posts}\n**Images**: {images}\n**Archived**: {archived}\n**Sticky**: {sticky}\n**Bump Limit Reached**: {bumplimit}".format(
+                        name=k,
+                        url=v.get("url", "broken feed..."),
+                        posts=v.get("numberOfPosts", "broken feed..."),
+                        images=v.get("numberOfImages", "broken feed..."),
+                        archived=v.get("isArchived", "broken feed..."),
+                        sticky=v.get("isSticky", "broken feed...")
+                        bumplimit=.vet("isAtBumpLimit", "broken feed...")
+                    )
+                    for k, v in data.items()
+                )
+            )
+            for page in pagify(output):
+                await ctx.send(
+                    embed=discord.Embed(
+                        description=page, color=(await ctx.embed_color())
+                    )
+                )
+        else:
+            output = "\n".join(
+                (
+                    "{name}: {url}\nReplies: {posts}\nImages: {images}\nArchived: {archived}\nSticky: {sticky}\nBump Limit Reached: {bumplimit}".format(
+                    "{name}: {url} - {posts} posts".format(
+                        name=k,
+                        url=v.get("url", "broken feed..."),
+                        posts=v.get("numberOfPosts", "broken feed...")
+                        images=v.get("numberOfImages", "broken feed..."),
+                        archived=v.get("isArchived", "broken feed..."),
+                        sticky=v.get("isSticky", "broken feed...")
+                        bumplimit=.vet("isAtBumpLimit", "broken feed...")
+                    )
+                    for k, v in data.items()
+                )
+            )
+            for page in pagify(output):
+                await ctx.send(page)
+
+
     @chanfeed.command(name="force")
     async def force_feed(
             self,
@@ -604,3 +691,4 @@ class ChanFeed(commands.Cog):
                 await ctx.tick()
         else:
             await ctx.send("That doesn't appear to be a valid thread.")
+
