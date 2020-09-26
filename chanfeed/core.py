@@ -629,7 +629,6 @@ class ChanFeed(commands.Cog):
             output = "\n".join(
                 (
                     "{name}: {url}\nReplies: {posts}\nImages: {images}\nArchived: {archived}\nSticky: {sticky}\nBump Limit Reached: {bumplimit}".format(
-                    "{name}: {url} - {posts} posts".format(
                         name=k,
                         url=v.get("url", "broken feed..."),
                         posts=v.get("numberOfPosts", "broken feed..."),
