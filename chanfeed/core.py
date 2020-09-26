@@ -613,7 +613,7 @@ class ChanFeed(commands.Cog):
                         posts=v.get("numberOfPosts", "broken feed..."),
                         images=v.get("numberOfImages", "broken feed..."),
                         archived=v.get("isArchived", "broken feed..."),
-                        sticky=v.get("isSticky", "broken feed...")
+                        sticky=v.get("isSticky", "broken feed..."),
                         bumplimit=v.get("isAtBumpLimit", "broken feed...")
                     )
                     for k, v in data.items()
@@ -632,10 +632,10 @@ class ChanFeed(commands.Cog):
                     "{name}: {url} - {posts} posts".format(
                         name=k,
                         url=v.get("url", "broken feed..."),
-                        posts=v.get("numberOfPosts", "broken feed...")
+                        posts=v.get("numberOfPosts", "broken feed..."),
                         images=v.get("numberOfImages", "broken feed..."),
                         archived=v.get("isArchived", "broken feed..."),
-                        sticky=v.get("isSticky", "broken feed...")
+                        sticky=v.get("isSticky", "broken feed..."),
                         bumplimit=v.get("isAtBumpLimit", "broken feed...")
                     )
                     for k, v in data.items()
