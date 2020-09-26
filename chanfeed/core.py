@@ -614,7 +614,7 @@ class ChanFeed(commands.Cog):
                         images=v.get("numberOfImages", "broken feed..."),
                         archived=v.get("isArchived", "broken feed..."),
                         sticky=v.get("isSticky", "broken feed...")
-                        bumplimit=.vet("isAtBumpLimit", "broken feed...")
+                        bumplimit=v.get("isAtBumpLimit", "broken feed...")
                     )
                     for k, v in data.items()
                 )
@@ -636,7 +636,7 @@ class ChanFeed(commands.Cog):
                         images=v.get("numberOfImages", "broken feed..."),
                         archived=v.get("isArchived", "broken feed..."),
                         sticky=v.get("isSticky", "broken feed...")
-                        bumplimit=.vet("isAtBumpLimit", "broken feed...")
+                        bumplimit=v.get("isAtBumpLimit", "broken feed...")
                     )
                     for k, v in data.items()
                 )
