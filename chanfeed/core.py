@@ -127,7 +127,7 @@ class ChanFeed(commands.Cog):
 
     # fetch the feed here
     # Check that the board exists and then check the thread exists
-    async def fetch_feed(self, url: str, channel = None, feed_name = None):
+    async def fetch_feed(self, url: str):
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
         split = self.url_splitter(url)
@@ -186,15 +186,15 @@ class ChanFeed(commands.Cog):
             )
             # We should be able to check here, I think, if the feed was in the
             # configuration, update/remove it, send the message.
-            archivepost = thread_is_archived(url)
+            #archivepost = thread_is_archived(url)
             # Send it
-            await self.bot.send_filtered(channel, **archivepost)
+            #await self.bot.send_filtered(channel, **archivepost)
             # Remove the configuration
-            if channel and feed_name:
-                async with self.config.channel(channel).feeds() as feeds:
-                    del feeds[feed_name]
+            #if channel and feed_name:
+            #    async with self.config.channel(channel).feeds() as feeds:
+            #        del feeds[feed_name]
 
-            return None
+            return chanthread
 
         return chanthread
 
@@ -422,7 +422,7 @@ class ChanFeed(commands.Cog):
                 if url in feeds_fetched:
                     response = feeds_fetched[url]
                 else:
-                    response = await self.fetch_feed(url, channel, feed_name)
+                    response = await self.fetch_feed(url)
                     feeds_fetched[url] = response
 
                 await self.handle_response_from_loop(
@@ -631,7 +631,7 @@ class ChanFeed(commands.Cog):
         if not data:
             return await ctx.send(f"{channel}: No feeds.")
 
-        response = await self.fetch_feed(url, channel, feed)
+        response = await self.fetch_feed(url)
 
         if await ctx.embed_requested():
             output = "\n".join(
@@ -693,7 +693,7 @@ class ChanFeed(commands.Cog):
         if url is None:
             return await ctx.send("There is no such feed available. Try your call again later.")
 
-        response = await self.fetch_feed(url, channel, feed)
+        response = await self.fetch_feed(url)
 
         # Like another section, if we get "None" then we're not valid
         # That's just how it has to be
