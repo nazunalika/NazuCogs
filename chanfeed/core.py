@@ -127,7 +127,7 @@ class ChanFeed(commands.Cog):
 
     # fetch the feed here
     # Check that the board exists and then check the thread exists
-    async def fetch_feed(self, url: str):
+    async def fetch_feed(self, url: str, channel = None, feed_name = None):
         timeout = aiohttp.client.ClientTimeout(total=15)
         # SPLIT OUT THE URL HERE
         split = self.url_splitter(url)
@@ -178,7 +178,22 @@ class ChanFeed(commands.Cog):
 
         if chanthread.archived:
             # The thread is archived
-            log.debug(f"The thread {board}/{thread} is archived and is not considered valid.")
+            log.debug(f"The thread is archived and is not considered valid.")
+            debug_exc_log(
+                log,
+                exc,
+                f"The thread {board} -> {thread} is archived and is not considered valid.",
+            )
+            # We should be able to check here, I think, if the feed was in the
+            # configuration, update/remove it, send the message.
+            archivepost = thread_is_archived(url)
+            # Send it
+            await self.bot.send_filtered(channel, **archivepost)
+            # Remove the configuration
+            if channel and feed_name:
+                async with self.config.channel(channel).feeds() as feeds:
+                    del feeds[feed_name]
+
             return None
 
         return chanthread
@@ -385,19 +400,6 @@ class ChanFeed(commands.Cog):
                     feed_name, "isAtBumpLimit", value=response.bumplimit
                 )
 
-        # There should be a more elegant way to do this, but here we'll just
-        # send a message about the thread being archived and then removed it
-        # from configuration
-
-        if response.archived:
-            # Get thread archived message
-            archivepost = thread_is_archived(feed_name)
-            # Send it
-            await self.bot.send_filtered(channel, **archivepost)
-            # Remove the configuration
-            async with self.config.channel(channel).feeds() as feeds:
-                del feeds[feed_name]
-
     async def do_feeds(self):
         feeds_fetched: Dict[str, Any] = {}
         default_embed_settings: Dict[discord.Guild, bool] = {}
@@ -420,7 +422,7 @@ class ChanFeed(commands.Cog):
                 if url in feeds_fetched:
                     response = feeds_fetched[url]
                 else:
-                    response = await self.fetch_feed(url)
+                    response = await self.fetch_feed(url, channel, feed_name)
                     feeds_fetched[url] = response
 
                 await self.handle_response_from_loop(
@@ -629,7 +631,7 @@ class ChanFeed(commands.Cog):
         if not data:
             return await ctx.send(f"{channel}: No feeds.")
 
-        response = await self.fetch_feed(url)
+        response = await self.fetch_feed(url, channel, feed)
 
         if await ctx.embed_requested():
             output = "\n".join(
@@ -691,7 +693,7 @@ class ChanFeed(commands.Cog):
         if url is None:
             return await ctx.send("There is no such feed available. Try your call again later.")
 
-        response = await self.fetch_feed(url)
+        response = await self.fetch_feed(url, channel, feed)
 
         # Like another section, if we get "None" then we're not valid
         # That's just how it has to be
