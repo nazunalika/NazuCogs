@@ -179,17 +179,7 @@ class ChanFeed(commands.Cog):
         if chanthread.archived:
             # The thread is archived
             log.debug(f"The thread is archived and is not considered valid.")
-            # We should be able to check here, I think, if the feed was in the
-            # configuration, update/remove it, send the message.
-            #archivepost = thread_is_archived(url)
-            # Send it
-            #await self.bot.send_filtered(channel, **archivepost)
-            # Remove the configuration
-            #if channel and feed_name:
-            #    async with self.config.channel(channel).feeds() as feeds:
-            #        del feeds[feed_name]
-
-            return chanthread
+            return None
 
         return chanthread
 
