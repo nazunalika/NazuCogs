@@ -177,7 +177,7 @@ class ChanFeed(commands.Cog):
             return None
 
         if chanthread.archived:
-            # The thread is archived
+            # The thread is archived, so don't add.
             log.debug(f"The thread is archived and is not considered valid.")
             return None
 
