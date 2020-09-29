@@ -143,9 +143,10 @@ class ChanFeed(commands.Cog):
                     pass
                 if chanthread.archived:
                     # The thread is archived, so don't add.
-                    log.debug(f"The thread is archived and is not considered valid.")
-                    # return chanthread, because other logic will take care of the
-                    # error and tell us to fuck off.
+                    #log.debug(f"The thread is archived and is not considered valid.")
+                    # I guess I won't really need this, since the archive
+                    # status is actually checked later. I'll remove this
+                    # section in a later release.
                     pass
 
         except (aiohttp.ClientError, asyncio.TimeoutError):
@@ -411,7 +412,7 @@ class ChanFeed(commands.Cog):
 
             for feed_name, feed in data["feeds"].items():
                 url = feed.get("url", None)
-                archived = feed.get("isArchived", False)
+                archived = feed.get("isArchived")
                 if not url:
                     continue
                 if archived:
