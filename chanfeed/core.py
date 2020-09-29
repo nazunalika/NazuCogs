@@ -141,6 +141,13 @@ class ChanFeed(commands.Cog):
             if chanboard.title is not None:
                 if chanthread.id is not None:
                     pass
+                if chanthread.archived:
+                    # The thread is archived, so don't add.
+                    log.debug(f"The thread is archived and is not considered valid.")
+                    # return chanthread, because other logic will take care of the
+                    # error and tell us to fuck off.
+                    pass
+
         except (aiohttp.ClientError, asyncio.TimeoutError):
             # We couldn't connect
             log.debug(f"We could not connect to 4chan.org")
@@ -174,11 +181,6 @@ class ChanFeed(commands.Cog):
                 exc,
                 f"Unexpected exception type {type(exc)} encountered for {board} -> {thread}",
             )
-            return None
-
-        if chanthread.archived:
-            # The thread is archived, so don't add.
-            log.debug(f"The thread is archived and is not considered valid.")
             return None
 
         return chanthread
@@ -346,6 +348,13 @@ class ChanFeed(commands.Cog):
         # post was provided, we'll update our configuration.
         if not response:
             return
+        elif response.archived:
+            await self.config.channel(channel).feeds.set_raw(
+                feed_name, "isArchived", value=response.archived
+            )
+            archivepost = thread_is_archived(feed_name)
+            await self.bot.send_filtered(channel, **archivepost)
+            return
         try:
             last = await self.format_and_send(
                 destination=channel,
@@ -402,8 +411,11 @@ class ChanFeed(commands.Cog):
 
             for feed_name, feed in data["feeds"].items():
                 url = feed.get("url", None)
+                archived = feed.get("isArchived", False)
                 if not url:
                     continue
+                if archived:
+                    pass
                 if url in feeds_fetched:
                     response = feeds_fetched[url]
                 else:
@@ -458,7 +470,14 @@ class ChanFeed(commands.Cog):
             if response is None:
                 return await ctx.send(
                     f"That doesn't appear to be a valid thread. "
-                    f"Thread is either archived, or the board/thread does not exist."
+                    f"Thread is either archived, the board/thread does not exist, "
+                    f"or we could not connect to 4chan.org."
+                    f"\n\nCheck the bot logs for more information."
+                )
+
+            elif response.archived:
+                return await ctx.send(
+                    f"That thread is not valid because it is archived. "
                     f"\n\nCheck the bot logs for more information."
                 )
 
