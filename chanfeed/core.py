@@ -141,13 +141,6 @@ class ChanFeed(commands.Cog):
             if chanboard.title is not None:
                 if chanthread.id is not None:
                     pass
-                if chanthread.archived:
-                    # The thread is archived, so don't add.
-                    #log.debug(f"The thread is archived and is not considered valid.")
-                    # I guess I won't really need this, since the archive
-                    # status is actually checked later. I'll remove this
-                    # section in a later release.
-                    pass
 
         except (aiohttp.ClientError, asyncio.TimeoutError):
             # We couldn't connect
@@ -433,7 +426,7 @@ class ChanFeed(commands.Cog):
 
     async def bg_loop(self):
         await self.bot.wait_until_ready()
-        while await asyncio.sleep(60, True):
+        while await asyncio.sleep(30, True):
             await self.do_feeds()
 
     # Commands
