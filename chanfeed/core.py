@@ -125,6 +125,11 @@ class ChanFeed(commands.Cog):
         archived_comment = "Thread (%s) is archived" % (t)
         return {"content": archived_comment, "embed": None}
 
+    @staticmethod
+    def thread_has_deleted_replies(t):
+        deleted_comment = "Thread (%s) has deleted messages" % (t)
+        return {"content": deleted_comment, "embed": None}
+
     # fetch the feed here
     # Check that the board exists and then check the thread exists
     async def fetch_feed(self, url: str):
@@ -211,6 +216,10 @@ class ChanFeed(commands.Cog):
                 for k in howmany:
                     loopydata['entries'].append(response.replies[k])
             elif new_replies == thread_reply_number:
+                loopydata['entries'].append(response.replies[-1])
+            elif new_replies < thread_reply_number:
+                deletedpost = thread_has_deleted_replies(feed_name)
+                await self.bot.send_filtered(destination, **deletedpost)
                 loopydata['entries'].append(response.replies[-1])
         elif force:
             loopydata['entries'] = []
