@@ -38,7 +38,7 @@ class ChanFeed(commands.Cog):
     """
 
     __author__ = "nazunalika (Sokel)"
-    __version__ = "330.0.3"
+    __version__ = "330.0.4"
 
     # help formatter
     def format_help_for_context(self, ctx):
@@ -426,7 +426,7 @@ class ChanFeed(commands.Cog):
 
     async def bg_loop(self):
         await self.bot.wait_until_ready()
-        while await asyncio.sleep(30, True):
+        while await asyncio.sleep(60, True):
             await self.do_feeds()
 
     # Commands
