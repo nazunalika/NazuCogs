@@ -434,8 +434,8 @@ class ChanFeed(commands.Cog):
                 )
 
     async def bg_loop(self):
-        await self.bot.wait_until_ready()
-        while await asyncio.sleep(60, True):
+        await self.bot.wait_until_red_ready()
+        while await asyncio.sleep(30, True):
             await self.do_feeds()
 
     # Commands
