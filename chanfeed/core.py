@@ -85,7 +85,7 @@ class ChanFeed(commands.Cog):
             self,
             channel: discord.TextChannel,
     ) -> bool:
-        ret: bool = await self.bot.embed_requested(channel, channel.guild.me)
+        ret: bool = await self.bot.embed_requested(channel)
         return ret
 
     # unload
