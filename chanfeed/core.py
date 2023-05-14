@@ -25,6 +25,12 @@ from .converters import TriState
 log = logging.getLogger("red.nazucogs.chanfeed")
 log.setLevel(logging.DEBUG)
 
+ipv4_re = re.compile("\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}")
+ipv6_re = re.compile("([a-f0-9:]+:+)+[a-f0-9]+")
+
+__author__ = "nazunalika (Sokel)"
+__version__ = "330.0.5"
+
 def debug_exc_log(lg: logging.Logger, exc: Exception, msg: str = "Exception in Chan Feed"):
     if lg.getEffectiveLevel() <= logging.DEBUG:
         lg.exception(msg, exc_info=exc)
@@ -36,9 +42,6 @@ class ChanFeed(commands.Cog):
     This cog has limited support but I will try my best to assist users in
     fixing any issues that may occur.
     """
-
-    __author__ = "nazunalika (Sokel)"
-    __version__ = "330.0.4"
 
     # help formatter
     def format_help_for_context(self, ctx):
@@ -53,8 +56,12 @@ class ChanFeed(commands.Cog):
             self, identifier=99123337941934777, force_registration=True
         )
         self.config.register_channel(feeds={})
-        self.session = aiohttp.ClientSession()
+        self._headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0"}
+
+        self.session = aiohttp.ClientSession(headers=self._headers)
+
         self.bg_loop_task: Optional[asyncio.Task] = None
+
 
     # background sync
     def init(self):

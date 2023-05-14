@@ -1,6 +1,7 @@
 from .core import ChanFeed
 import asyncio
 from redbot.core import Config
+from redbot.core import commands
 
 
 async def lets_notify(bot):
@@ -26,8 +27,9 @@ async def lets_notify(bot):
         await conf.has_notified.set(True)
 
 
-def setup(bot):
+#async def setup(bot):
+async def setup(bot: commands.Bot):
     cog = ChanFeed(bot)
-    bot.add_cog(cog)
-    cog.init()
-    asyncio.create_task(lets_notify(bot))
+    await bot.add_cog(cog)
+    cog.initialize()
+    #asyncio.create_task(lets_notify(bot))
