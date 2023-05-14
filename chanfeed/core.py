@@ -64,7 +64,7 @@ class ChanFeed(commands.Cog):
 
 
     # background sync
-    def init(self):
+    def initialize(self):
         self.bg_loop_task = asyncio.create_task(self.bg_loop())
         def done_callback(fut: asyncio.Future):
             try:

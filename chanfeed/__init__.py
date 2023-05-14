@@ -27,7 +27,6 @@ async def lets_notify(bot):
         await conf.has_notified.set(True)
 
 
-#async def setup(bot):
 async def setup(bot: commands.Bot):
     cog = ChanFeed(bot)
     await bot.add_cog(cog)
