@@ -1,7 +1,7 @@
 NazuCogs
 ^^^^^^^^
 
-Cogs that I built that served a very particular need.
+Cogs that I built that served a very particular need. Also contains copied cogs from other projects as forks.
 
 .. contents::
 
